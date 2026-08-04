@@ -1,0 +1,38 @@
+name: .NET CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore ModernFormsNext.WebView.slnx
+
+      - name: Build
+        run: dotnet build ModernFormsNext.WebView.slnx --configuration Release --no-restore
+
+      - name: Test when test sources exist
+        shell: pwsh
+        run: |
+          $testSources = Get-ChildItem tests -Recurse -Filter *.cs |
+            Where-Object { $_.FullName -notmatch '[\\/]obj[\\/]' }
+          if ($testSources) {
+            dotnet test tests/ModernFormsNext.WebView.Tests/ModernFormsNext.WebView.Tests.csproj --configuration Release --no-build
+          }
+          else {
+            Write-Host 'No test sources exist yet; skipping dotnet test.'
+          }

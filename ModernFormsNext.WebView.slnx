@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ModernFormsNext.WebView/ModernFormsNext.WebView.csproj" />
+    <Project Path="src/ModernFormsNext.WebView.Windows/ModernFormsNext.WebView.Windows.csproj" />
+    <Project Path="src/ModernFormsNext.WebView.Android/ModernFormsNext.WebView.Android.csproj" />
+  </Folder>
+  <Folder Name="/samples/">
+    <Project Path="samples/ModernFormsNext.WebView.Sample.Windows/ModernFormsNext.WebView.Sample.Windows.csproj" />
+    <Project Path="samples/ModernFormsNext.WebView.Sample.Android/ModernFormsNext.WebView.Sample.Android.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ModernFormsNext.WebView.Tests/ModernFormsNext.WebView.Tests.csproj" />
+  </Folder>
+  <Folder Name="/docs/" />
+</Solution>

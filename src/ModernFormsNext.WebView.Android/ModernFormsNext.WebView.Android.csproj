@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>ModernFormsNext.WebView.Android</AssemblyName>
+    <RootNamespace>ModernFormsNext.WebView.Android</RootNamespace>
+  </PropertyGroup>
+</Project>

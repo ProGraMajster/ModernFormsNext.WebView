@@ -1,0 +1,23 @@
+name: Planning proposal
+description: Propose architecture, requirements, or documentation during the Planning phase.
+title: "[Planning] "
+labels:
+  - planning
+body:
+  - type: markdown
+    attributes:
+      value: Implementation remains blocked until the main ModernFormsNext framework stabilizes.
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: Describe the requirement, architecture question, or documentation change.
+    validations:
+      required: true
+  - type: textarea
+    id: boundaries
+    attributes:
+      label: Platform and API boundaries
+      description: Explain shared versus platform-specific responsibilities and any public API impact.
+    validations:
+      required: true
