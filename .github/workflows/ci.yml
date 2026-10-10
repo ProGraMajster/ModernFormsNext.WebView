@@ -1,38 +1,81 @@
 name: .NET CI
-
-on:
-  push:
-  pull_request:
-
+on: [push, pull_request]
 permissions:
   contents: read
-
+env:
+  FRAMEWORK_COMMIT: 69c5ea2b20b07d9df801340c8ae9e3e1ca5dfbc3
 jobs:
-  build:
+  shared:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: webview
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+      - uses: actions/checkout@v4
         with:
-          dotnet-version: 10.0.x
-
-      - name: Restore
-        run: dotnet restore ModernFormsNext.WebView.slnx
-
-      - name: Build
-        run: dotnet build ModernFormsNext.WebView.slnx --configuration Release --no-restore
-
-      - name: Test when test sources exist
-        shell: pwsh
+          path: webview
+      - uses: actions/checkout@v4
+        with:
+          repository: ProGraMajster/ModernFormsNext
+          ref: ${{ env.FRAMEWORK_COMMIT }}
+          path: framework
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.401
+      - name: Restore shared tests
+        run: dotnet restore tests/ModernFormsNext.WebView.Tests -p:ModernFormsNextSourceRoot=${{ github.workspace }}/framework -p:EnableWindowsTargeting=true
+      - name: Test shared contracts
+        run: dotnet test tests/ModernFormsNext.WebView.Tests -c Release --no-restore -m:1 -p:UseSharedCompilation=false -p:GeneratePackageOnBuild=false -p:ModernFormsNextSourceRoot=${{ github.workspace }}/framework -p:EnableWindowsTargeting=true
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: webview
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: webview
+      - uses: actions/checkout@v4
+        with:
+          repository: ProGraMajster/ModernFormsNext
+          ref: ${{ env.FRAMEWORK_COMMIT }}
+          path: framework
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.401
+      - name: Restore Windows
+        run: dotnet restore samples/ModernFormsNext.WebView.Sample.Windows -p:ModernFormsNextSourceRoot=${{ github.workspace }}/framework
+      - name: Build Windows sample
+        run: dotnet build samples/ModernFormsNext.WebView.Sample.Windows -c Release --no-restore -m:1 -p:UseSharedCompilation=false -p:GeneratePackageOnBuild=false -p:ModernFormsNextSourceRoot=${{ github.workspace }}/framework
+      - name: Test Windows adapter queue
+        run: dotnet test tests/ModernFormsNext.WebView.Windows.Tests -c Release -m:1 -p:UseSharedCompilation=false -p:GeneratePackageOnBuild=false -p:ModernFormsNextSourceRoot=${{ github.workspace }}/framework
+  android:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: webview
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: webview
+      - uses: actions/checkout@v4
+        with:
+          repository: ProGraMajster/ModernFormsNext
+          ref: ${{ env.FRAMEWORK_COMMIT }}
+          path: framework
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.401
+      # Select .NET 10 Android's JDK explicitly; the runner default may still be 17.
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install Android workload and SDK
         run: |
-          $testSources = Get-ChildItem tests -Recurse -Filter *.cs |
-            Where-Object { $_.FullName -notmatch '[\\/]obj[\\/]' }
-          if ($testSources) {
-            dotnet test tests/ModernFormsNext.WebView.Tests/ModernFormsNext.WebView.Tests.csproj --configuration Release --no-build
-          }
-          else {
-            Write-Host 'No test sources exist yet; skipping dotnet test.'
-          }
+          dotnet workload install android --skip-manifest-update
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0"
+      - name: Test deterministic Android policy
+        run: dotnet test tests/ModernFormsNext.WebView.Android.Tests -c Release -m:1 -p:UseSharedCompilation=false -p:GeneratePackageOnBuild=false -p:ModernFormsNextSourceRoot=${{ github.workspace }}/framework -p:EnableWindowsTargeting=true
+      - name: Build Android sample APK
+        run: dotnet build samples/ModernFormsNext.WebView.Sample.Android -c Release -t:SignAndroidPackage -m:1 -p:UseSharedCompilation=false -p:GeneratePackageOnBuild=false -p:ModernFormsNextSourceRoot=${{ github.workspace }}/framework -p:EnableWindowsTargeting=true

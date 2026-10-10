@@ -1,0 +1,120 @@
+using ModernFormsNext.WebView.Windows;
+using ModernFormsNext.WebView.Sample;
+using ModernFormsNext.WindowKit.Backend.Windows;
+
+internal static class Program
+{
+    [STAThread]
+    private static void Main(string[] args)
+    {
+        WindowsPlatformBootstrap.Initialize();
+        bool keyboard = args.Contains("--validate-keyboard", StringComparer.Ordinal);
+        bool validate = keyboard || args.Contains("--validate", StringComparer.Ordinal);
+        string? profile = validate ? System.IO.Path.Combine(System.IO.Path.GetTempPath(), "mfn-webview-" + Guid.NewGuid().ToString("N")) : null;
+        WindowsWebViewProvider.Register(new WindowsWebViewOptions { UserDataFolder = profile });
+        using var form = new SampleForm();
+        if (validate) form.Shown += async (_, _) =>
+        {
+            try
+            {
+                await RuntimeValidation.RunAsync(form, Console.WriteLine);
+                await ValidateInitializationRacesAsync(form);
+                // Keyboard injection requires an interactive foreground desktop. Keep it
+                // explicit so ordinary native validation can run from background tools.
+                if (keyboard) await NativeKeyboardValidation.RunAsync(form);
+                await using var server = new LoopbackContentServer();
+                await NavigationRuntimeValidation.RunAsync(form.Browser, server.Address("one"), server.Address("two"), Console.WriteLine);
+                await NavigationRuntimeValidation.RunPostAsync(form.Browser, server.Address("post"), Console.WriteLine);
+                await ValidateInitializationFailureAsync(form);
+                using var second = new ModernFormsNext.Form { UseSystemDecorations = true };
+                second.Show();
+                long before = form.Browser.GetDiagnostics().PeerGeneration;
+                await RuntimeValidation.NavigateAsync(form.Browser, () => second.Controls.Add(form.Browser));
+                RuntimeValidation.Require(form.Browser.GetDiagnostics().PeerGeneration > before, "cross-window peer recreated");
+                RuntimeValidation.Require(!form.Browser.CanGoBack && !form.Browser.CanGoForward, "recreation resets browser history");
+                await RuntimeValidation.NavigateAsync(form.Browser, () =>
+                { form.Controls.Add(form.Browser); form.Controls.SetChildIndex(form.Browser, 0); });
+                Console.WriteLine("PASS cross-window reparent + replay + history reset");
+                Console.WriteLine("RUNTIME PASS");
+            }
+            catch (Exception error) { Console.WriteLine("RUNTIME FAIL: " + error); Environment.ExitCode = 1; }
+            finally { form.Close(); }
+        };
+        ModernFormsNext.Application.Run(form);
+        if (profile is not null)
+        {
+            string resolvedProfile = System.IO.Path.GetFullPath(profile);
+            string temporaryRoot = System.IO.Path.GetFullPath(System.IO.Path.GetTempPath()).TrimEnd(System.IO.Path.DirectorySeparatorChar)
+                + System.IO.Path.DirectorySeparatorChar;
+            if (!resolvedProfile.StartsWith(temporaryRoot, StringComparison.OrdinalIgnoreCase) ||
+                !System.IO.Path.GetFileName(resolvedProfile).StartsWith("mfn-webview-", StringComparison.Ordinal))
+                throw new InvalidOperationException("Refusing cleanup outside the test-owned temporary profile.");
+            // Runtime subprocesses release their profile asynchronously after controller.Close.
+            // Cleanup is bounded and only ever targets the unique test-owned directory.
+            for (int i = 0; i < 20 && Directory.Exists(profile); ++i)
+            {
+                try { Directory.Delete(resolvedProfile, recursive: true); }
+                catch (IOException) { Thread.Sleep(100); }
+                catch (UnauthorizedAccessException) { Thread.Sleep(100); }
+            }
+            if (Directory.Exists(profile)) { Console.WriteLine("PROFILE CLEANUP FAIL"); Environment.ExitCode = 1; }
+        }
+    }
+
+    private static async Task ValidateInitializationFailureAsync(SampleForm form)
+    {
+        string missingRuntime = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "mfn-webview-missing-runtime-" + Guid.NewGuid().ToString("N"));
+        string? previousRuntime = Environment.GetEnvironmentVariable("WEBVIEW2_BROWSER_EXECUTABLE_FOLDER");
+        // The SDK's process-local fixed-version override fails before creating a controller.
+        // An invalid profile instead displays an Edge-owned modal dialog and is unsuitable
+        // for unattended validation. Never alter the installed runtime or machine settings.
+        RuntimeValidation.Require(!Directory.Exists(missingRuntime), "missing-runtime fixture has no browser executable");
+        var provider = new WindowsWebViewProvider();
+        using var browser = new ModernFormsNext.WebView.WebView(provider) { Bounds = new(10, 250, 100, 80) };
+        var failure = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        int failures = 0;
+        browser.InitializationFailed += (_, e) =>
+        { RuntimeValidation.Require(e.Category == ModernFormsNext.WebView.WebViewErrorCategory.Engine, "neutral initialization failure"); ++failures; failure.TrySetResult(); };
+        try
+        {
+            Environment.SetEnvironmentVariable("WEBVIEW2_BROWSER_EXECUTABLE_FOLDER", missingRuntime);
+            form.Controls.Add(browser);
+            RuntimeValidation.Require(browser.HostingDiagnostics.State == ModernFormsNext.NativeViewHostState.Attached,
+                "failure fixture is visibly hosted inside the Form client area");
+            await failure.Task.WaitAsync(TimeSpan.FromSeconds(15));
+            await ModernFormsNext.WindowKit.Threading.Dispatcher.UIThread.InvokeAsync(() => { });
+            RuntimeValidation.Require(failures == 1 && browser.InitializationState == ModernFormsNext.WebView.WebViewInitializationState.Failed,
+                "failed peer does not automatically retry");
+            RuntimeValidation.Require(form.Browser.IsInitialized, "initialization failure isolated from the active browser");
+            Console.WriteLine("PASS isolated native initialization failure + no automatic retry");
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("WEBVIEW2_BROWSER_EXECUTABLE_FOLDER", previousRuntime);
+            form.Controls.Remove(browser);
+        }
+    }
+
+    private static async Task ValidateInitializationRacesAsync(SampleForm form)
+    {
+        using (var pending = new ModernFormsNext.WebView.WebView { Bounds = new(10, 250, 100, 80) })
+        {
+            form.Controls.Add(pending);
+            try
+            {
+                RuntimeValidation.Require(!pending.IsInitialized, "controller initialization is pending");
+                pending.Select(); form.Browser.Select();
+                await RuntimeValidation.ReadyAsync(pending);
+                RuntimeValidation.Require(form.Browser.Selected && !pending.Selected, "deferred controller does not steal canonical focus");
+            }
+            finally { form.Controls.Remove(pending); }
+        }
+        for (int i = 0; i < 10; ++i)
+        {
+            using var pending = new ModernFormsNext.WebView.WebView { Bounds = new(10, 250, 100, 80) };
+            form.Controls.Add(pending); form.Controls.Remove(pending);
+        }
+        RuntimeValidation.Require(form.Browser.IsInitialized, "immediate retirement isolates pending controller initialization");
+        Console.WriteLine("PASS deferred focus guard + 10 controller retirements during initialization");
+    }
+}

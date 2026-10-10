@@ -1,50 +1,42 @@
 # ModernFormsNext.WebView
 
-> **Project status: Planning**
+> **Development / Experimental — no preview or stable release**
 
-ModernFormsNext.WebView is a planned official extension for
-[ModernFormsNext](https://github.com/ProGraMajster/ModernFormsNext). It is not
-ready for use and does not yet contain a WebView implementation.
+An opt-in browser extension in a separate repository from
+[ModernFormsNext](https://github.com/ProGraMajster/ModernFormsNext). `WebView : NativeViewHost`
+uses the main framework's implemented native hosting contract (#60). It adds no
+browser dependency to the framework and implements no second layout/focus/Activity system.
 
-## Goal
+Windows uses official Microsoft WebView2 Core APIs. Android uses platform
+`android.webkit.WebView`, with API 23 as its minimum. The experimental implementation includes
+URI/raw HTML navigation, back/forward/reload/stop, neutral events, cancellation,
+explicit JSON-result scripting, string messaging, user agent settings and diagnostics.
+JavaScript is disabled by default. Cookies/headers APIs, permission UX, downloads,
+new-window management and DevTools remain future work; permissions and new windows
+are denied and downloads are not saved automatically.
 
-The project will provide a cross-platform WebView control for ModernFormsNext.
-The first target platforms are Windows and Android:
+Source bootstrap is pinned to framework commit
+`69c5ea2b20b07d9df801340c8ae9e3e1ca5dfbc3`. No published package is selected as the
+NativeViewHost dependency. See [testing](docs/testing.md) for reproducible build commands.
+The existing application-owned provider is registered explicitly:
 
-- Windows will use Microsoft Edge WebView2.
-- Android will use the native `android.webkit.WebView`.
+```csharp
+// Windows startup, STA thread:
+WindowsPlatformBootstrap.Initialize();
+WindowsWebViewProvider.Register();
+var form = new Form();
+form.Controls.Add(new WebView { Dock = DockStyle.Fill, Source = new Uri("https://example.com/") });
+Application.Run(form);
+```
 
-The extension will remain separate from the main ModernFormsNext package. This
-keeps heavyweight platform dependencies outside the core framework and lets
-applications opt in only when embedded web content is required.
+The two samples share the same MFN Form and deterministic offline HTML. Use their
+Offline HTML button without network access. Samples explicitly enable JavaScript
+for their scripting/messaging demonstration. They are demonstration applications,
+not general purpose browsers.
 
-Implementation will begin only after the main ModernFormsNext framework has
-stabilized. The current repository is reserved for planning, architecture,
-documentation, and buildable project skeletons.
-
-## Planned capabilities
-
-- Navigate to a URL.
-- Display supplied HTML content.
-- Support `GoBack`, `GoForward`, `Reload`, and `Stop`.
-- Execute JavaScript.
-- Exchange messages between JavaScript and C#.
-- Expose navigation lifecycle and failure events.
-- Integrate focus, DPI scaling, clipping, and native-content hosting with
-  ModernFormsNext.
-
-## Repository boundaries
-
-- No WebView2 or Android WebView integration is implemented yet.
-- No WebView2 package or other platform runtime dependency is referenced.
-- The projects do not reference a local ModernFormsNext checkout.
-- No NuGet package or GitHub Release is produced at this stage.
-- No public WebView API has been committed yet.
-
-See [ROADMAP.md](ROADMAP.md) for the staged plan and
-[CONTRIBUTING.md](CONTRIBUTING.md) before proposing changes.
-
-## License
-
-ModernFormsNext.WebView is licensed under the MIT License, matching the main
-ModernFormsNext repository. See [LICENSE](LICENSE).
+Read [public API](docs/public-api.md), [architecture](docs/architecture.md),
+[capabilities](docs/capabilities.md), [security](docs/security.md),
+[Windows](docs/windows.md), [Android](docs/android.md) and [testing](docs/testing.md).
+[Final review](docs/final-review.md) includes the public API inventory and qualification limits.
+[ROADMAP.md](ROADMAP.md) distinguishes local implementation from approved/released work.
+This repository uses the MIT [LICENSE](LICENSE).

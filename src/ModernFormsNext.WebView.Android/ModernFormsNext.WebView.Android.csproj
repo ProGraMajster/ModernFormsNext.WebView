@@ -1,6 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <TargetFrameworks>net10.0;net10.0-android</TargetFrameworks>
+    <TargetFramework />
     <AssemblyName>ModernFormsNext.WebView.Android</AssemblyName>
     <RootNamespace>ModernFormsNext.WebView.Android</RootNamespace>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net10.0-android'">
+    <SupportedOSPlatformVersion>23.0</SupportedOSPlatformVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../ModernFormsNext.WebView/ModernFormsNext.WebView.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0-android'">
+    <ProjectReference Include="$(ModernFormsNextSourceRoot)/ModernFormsNext.WindowKit.Backend.Android/ModernFormsNext.WindowKit.Backend.Android.csproj" Condition="'$(ModernFormsNextSourceRoot)' != ''" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' != 'net10.0-android'">
+    <Compile Remove="Platform/**/*.cs" />
+  </ItemGroup>
 </Project>

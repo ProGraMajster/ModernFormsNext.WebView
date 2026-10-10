@@ -1,6 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <IsTestProject>true</IsTestProject>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <AssemblyName>ModernFormsNext.WebView.Tests</AssemblyName>
     <RootNamespace>ModernFormsNext.WebView.Tests</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
+    <ProjectReference Include="../../src/ModernFormsNext.WebView/ModernFormsNext.WebView.csproj" />
+    <ProjectReference Include="$(ModernFormsNextSourceRoot)/ModernFormsNext.Testing/ModernFormsNext.Testing.csproj" Condition="'$(ModernFormsNextSourceRoot)' != ''" />
+    <ProjectReference Include="$(ModernFormsNextSourceRoot)/ModernFormsNext.CodeGeneration/ModernFormsNext.CodeGeneration.csproj" Condition="'$(ModernFormsNextSourceRoot)' != ''" />
+  </ItemGroup>
 </Project>

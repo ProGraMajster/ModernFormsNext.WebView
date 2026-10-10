@@ -1,6 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <TargetFramework>net10.0-android</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <AndroidApplication>true</AndroidApplication>
+    <SupportedOSPlatformVersion>23.0</SupportedOSPlatformVersion>
+    <ApplicationId>com.programajster.modernformsnext.webview.sample</ApplicationId>
+    <ApplicationTitle>ModernFormsNext WebView</ApplicationTitle>
+    <!-- Match newer Android SDK defaults: do not add the build host RID during restore.
+         See https://github.com/dotnet/android/pull/10729. -->
+    <UseDefaultPublishRuntimeIdentifier>false</UseDefaultPublishRuntimeIdentifier>
+    <AndroidPackageFormats>apk</AndroidPackageFormats>
+    <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
+    <AndroidManifest>Properties/AndroidManifest.xml</AndroidManifest>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <AssemblyName>ModernFormsNext.WebView.Sample.Android</AssemblyName>
     <RootNamespace>ModernFormsNext.WebView.Sample.Android</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- Match the main framework Android sample's 16 KiB-compatible native asset override. -->
+    <PackageReference Include="HarfBuzzSharp" />
+    <ProjectReference Include="../../src/ModernFormsNext.WebView.Android/ModernFormsNext.WebView.Android.csproj" />
+    <Compile Include="../Shared/*.cs" Link="Shared/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="../Shared/test-page.html" Link="test-page.html" />
+  </ItemGroup>
 </Project>
