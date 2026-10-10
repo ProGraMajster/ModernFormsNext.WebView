@@ -6,6 +6,9 @@
     <SupportedOSPlatformVersion>23.0</SupportedOSPlatformVersion>
     <ApplicationId>com.programajster.modernformsnext.webview.sample</ApplicationId>
     <ApplicationTitle>ModernFormsNext WebView</ApplicationTitle>
+    <!-- Match newer Android SDK defaults: do not add the build host RID during restore.
+         See https://github.com/dotnet/android/pull/10729. -->
+    <UseDefaultPublishRuntimeIdentifier>false</UseDefaultPublishRuntimeIdentifier>
     <AndroidPackageFormats>apk</AndroidPackageFormats>
     <EmbedAssembliesIntoApk>true</EmbedAssembliesIntoApk>
     <AndroidManifest>Properties/AndroidManifest.xml</AndroidManifest>
