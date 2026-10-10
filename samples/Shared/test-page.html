@@ -1,0 +1,18 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>ModernFormsNext WebView deterministic content</title>
+<style>body{font:18px system-ui;padding:20px;background:#f7f7fa;color:#202030}button,input{font:inherit;margin:8px}section{margin-top:30px}</style>
+<h1>ModernFormsNext WebView</h1>
+<p id="status">Offline content ready</p>
+<input id="editor" aria-label="Native page input" placeholder="Focus and type here">
+<button id="page-send" onclick="modernFormsWebView.postMessage('page message')">Send to app</button>
+<a id="page-https" href="https://example.com/">HTTPS navigation</a>
+<a id="page-cancel" href="https://blocked.example/">Cancelable navigation</a>
+<section><button id="page-history" onclick="history.pushState({},'', '#entry'+Date.now())">History entry</button></section>
+<script>
+window.receivedMessage=null;
+window.addEventListener('message',function(e){receivedMessage=e.data;document.getElementById('status').textContent='App message: '+e.data;});
+window.testResult=function(){return {answer:42,text:'quoted "value"',array:[1,true,null]};};
+</script>
+<section style="height:900px">Scroll and clipping test content</section>
+<p>End of deterministic page</p>

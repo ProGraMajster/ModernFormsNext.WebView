@@ -1,11 +1,17 @@
-# Architecture notes
+# Experimental WebView baseline
 
-This directory will contain approved architecture records and usage
-documentation for ModernFormsNext.WebView.
+ModernFormsNext issue #60 already provides the native hosting contract. This feature package
+consumes it without defining another hosting or platform service system.
 
-The first design task is a platform-neutral native-content hosting contract.
-It must cover bounds, clipping, visibility, focus, DPI changes, input routing,
-dispatcher affinity, and native resource lifetime without exposing WebView2 or
-Android types to shared projects.
+- [Architecture and ownership](architecture.md)
+- [Public API, event order and examples](public-api.md)
+- [Windows adapter](windows.md)
+- [Android adapter](android.md)
+- [Security and content policy](security.md)
+- [Platform capabilities and limitations](capabilities.md)
+- [Build, tests and native validation](testing.md)
+- [Final review, API inventory and qualification](final-review.md)
+- [Historical implementation report](baseline-report.md)
 
-No hosting contract or public WebView API is finalized yet.
+APIs are experimental and unpublished. Build against the pinned framework source using
+scripts/bootstrap-framework.ps1 and ModernFormsNextSourceRoot, as described in the root README.

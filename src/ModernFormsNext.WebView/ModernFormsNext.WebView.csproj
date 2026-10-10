@@ -3,4 +3,7 @@
     <AssemblyName>ModernFormsNext.WebView</AssemblyName>
     <RootNamespace>ModernFormsNext.WebView</RootNamespace>
   </PropertyGroup>
+  <ItemGroup Condition="'$(ModernFormsNextSourceRoot)' != ''">
+    <ProjectReference Include="$(ModernFormsNextSourceRoot)/ModernFormsNext/ModernFormsNext.csproj" />
+  </ItemGroup>
 </Project>

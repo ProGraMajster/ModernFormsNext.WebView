@@ -10,6 +10,8 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ModernFormsNext.WebView.Tests/ModernFormsNext.WebView.Tests.csproj" />
+    <Project Path="tests/ModernFormsNext.WebView.Windows.Tests/ModernFormsNext.WebView.Windows.Tests.csproj" />
+    <Project Path="tests/ModernFormsNext.WebView.Android.Tests/ModernFormsNext.WebView.Android.Tests.csproj" />
   </Folder>
   <Folder Name="/docs/" />
 </Solution>

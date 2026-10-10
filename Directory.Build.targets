@@ -1,0 +1,16 @@
+<Project>
+  <!-- Official WebView2 targets add unused WPF/WinForms wrappers unconditionally.
+       This feature consumes only the official Core API and its native loader. -->
+  <Target Name="RemoveUnusedWebView2UiWrappers" BeforeTargets="ResolveAssemblyReferences">
+    <ItemGroup>
+      <Reference Remove="@(Reference)" Condition="'%(Reference.Filename)' == 'Microsoft.Web.WebView2.Wpf' Or '%(Reference.Filename)' == 'Microsoft.Web.WebView2.WinForms'" />
+    </ItemGroup>
+  </Target>
+  <!-- Source dependencies are explicit and never fall back to a floating framework version. -->
+  <Target Name="ValidateFrameworkSource" BeforeTargets="CollectPackageReferences;PrepareForBuild">
+    <Error Condition="'$(ModernFormsNextSourceRoot)' == ''"
+           Text="Set ModernFormsNextSourceRoot to a checkout of 69c5ea2b20b07d9df801340c8ae9e3e1ca5dfbc3. See docs/testing.md. NuGet bootstrap is deferred until a package contains NativeViewHost." />
+    <Error Condition="'$(ModernFormsNextSourceRoot)' != '' And !Exists('$(ModernFormsNextSourceRoot)/ModernFormsNext/NativeViewHost.cs')"
+           Text="ModernFormsNextSourceRoot must contain the public NativeViewHost implementation." />
+  </Target>
+</Project>

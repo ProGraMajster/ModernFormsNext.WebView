@@ -1,6 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.17763.0</TargetFramework>
     <AssemblyName>ModernFormsNext.WebView.Windows</AssemblyName>
     <RootNamespace>ModernFormsNext.WebView.Windows</RootNamespace>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../ModernFormsNext.WebView/ModernFormsNext.WebView.csproj" />
+    <PackageReference Include="Microsoft.Web.WebView2" />
+    <ProjectReference Include="$(ModernFormsNextSourceRoot)/ModernFormsNext.WindowKit.Backend.Windows/ModernFormsNext.WindowKit.Backend.Windows.csproj" Condition="'$(ModernFormsNextSourceRoot)' != ''" />
+  </ItemGroup>
 </Project>

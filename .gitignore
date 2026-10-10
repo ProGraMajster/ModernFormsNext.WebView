@@ -8,3 +8,6 @@ TestResults/
 *.suo
 *.nupkg
 *.snupkg
+.codex/
+.dependencies/
+*.WebView2/
