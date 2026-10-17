@@ -17,6 +17,8 @@ public sealed class MainActivity : AndroidWindowActivity
                 try
                 {
                     await RuntimeValidation.RunAsync(form, m => global::Android.Util.Log.Info("MFNWebView", m));
+                    await MessageSecurityRuntimeValidation.RunRedirectAsync(form.Browser, new Uri("https://example.com/"),
+                        m => global::Android.Util.Log.Info("MFNWebView", m));
                     await NavigationRuntimeValidation.RunAsync(form.Browser, new Uri("https://example.com/"), new Uri("https://example.org/"),
                         m => global::Android.Util.Log.Info("MFNWebView", m));
                     await NavigationRuntimeValidation.RunPostAsync(form.Browser, new Uri("https://example.com/"),

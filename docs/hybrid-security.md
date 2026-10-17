@@ -26,6 +26,13 @@ objects, services, filesystem paths, reflection or arbitrary methods. Handler re
 must be explicit, scoped, allowlisted and compatible with source-generated JSON/trimming/AOT.
 No ASP.NET Core dependency belongs in ordinary WebView.
 
+The baseline now exposes `RequestId` and `PeerGeneration` on received messages for
+forwarding/lifetime correlation, and `IsOriginAuthenticated` is **always false**.
+`AuthenticatedMessaging` is a reserved capability that neither adapter advertises.
+A same-origin iframe can invoke `parent.modernFormsWebView.postMessage`; Windows then
+reports the parent channel/Source. A top-level callback alone does not identify the
+original script caller. No allowlist of informational Source values upgrades this event.
+
 ## Native API evidence and pending research
 
 WebView2 documents [CoreWebView2.WebMessageReceived](https://learn.microsoft.com/en-us/dotnet/api/microsoft.web.webview2.core.corewebview2.webmessagereceived)
@@ -44,11 +51,11 @@ prototype exact-origin rules, reject opaque origins/subframes, check supported/u
 providers and stale reply proxies, and justify a pinned binding dependency before #17.
 No dependency was added and no origin-authentication prototype is claimed here.
 
-Regression evidence includes invalid resource paths/escapes, spoofed authority variants,
-immutable concurrent resolution, reentrant replacement, old callback rejection, unsupported
-capability rejection and native local CSP frame denial. A hostile remote/same-origin/opaque
-iframe and redirect **messaging** matrix remains NOT RUN for privileged transport because
-that transport is not implemented. Local frame CSP tests do not qualify #15/#17.
+Regression evidence additionally exercises same-origin parent-helper invocation, direct
+opaque iframe bridge calls, stale packets after native document replacement, Windows
+foreign HTTP iframe/HTTP302 and Android page-initiated meta redirect. Every accepted
+baseline event remains untrusted. Privileged transport qualification remains NOT RUN
+because that transport is not implemented; these tests do not qualify #15/#17.
 Malformed/oversized RPC/version/duplicate ID/timeout tests belong with #12; they are not
 claimed by the static-resource tests. Baseline malformed packets remain covered by the
 existing native fixture. See [phase2-progress](phase2-progress.md) for exact execution results.

@@ -24,7 +24,10 @@ public enum WebViewCapabilities
     /// <summary>A validated user agent override.</summary>
     UserAgent = 64,
     /// <summary>Immutable public application resources at a controlled HTTPS origin; no privileged messaging.</summary>
-    LocalContent = 128
+    LocalContent = 128,
+    /// <summary>Reserved for separately qualified origin/frame-authenticated messaging.</summary>
+    /// <remarks>Neither current adapter advertises this flag. Source and request IDs never enable it.</remarks>
+    AuthenticatedMessaging = 256
 }
 
 /// <summary>Describes browser initialization independently of native hosting availability.</summary>

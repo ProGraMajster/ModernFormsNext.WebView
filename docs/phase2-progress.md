@@ -1,5 +1,22 @@
 # Phase 2 progress — 2026-10-17
 
+## Sequential follow-up
+
+PR #35 completed a final audit and normal merge `79eaff579755578ce5a1faf19c861ffba86719d1`.
+Local main equals that merge; [post-merge CI](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39042236260)
+is SUCCESS. [Final audit](pr35-final-audit.md) distinguishes fresh and prior evidence.
+The historical first-delivery record below remains dated evidence, not the current merge state.
+
+#33 now adds [native messaging security verification](issue33-security-validation.md),
+immutable original callback metadata and an explicitly unavailable authenticated capability.
+Debug/Release 121/121 and both native platforms PASS; privileged transport is not enabled.
+The next stages #11/#12 remain separate branches/PRs and are started only after the
+previous stage's exact-head checks pass. New PRs are intentionally left unmerged.
+
+| Follow-up | Delivery | Local validation |
+| --- | --- | --- |
+| #33 | [PR #36](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/36), code `c001685` | Debug/Release 121/121; Windows/Android native PASS both; CI recorded on exact PR head |
+
 ## Verified baseline and scope
 
 WebView main was clean at `12a3beace771c4b694479d2e635c1851cf75c2d5`, containing merged

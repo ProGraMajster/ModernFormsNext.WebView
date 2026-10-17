@@ -23,6 +23,8 @@ internal static class Program
                 // explicit so ordinary native validation can run from background tools.
                 if (keyboard) await NativeKeyboardValidation.RunAsync(form);
                 await using var server = new LoopbackContentServer();
+                await MessageSecurityRuntimeValidation.RunNetworkAsync(form.Browser, server.Address("security/redirect"),
+                    new Uri(server.Address("security/frame").AbsoluteUri.Replace("127.0.0.1", "localhost", StringComparison.Ordinal)), Console.WriteLine);
                 await NavigationRuntimeValidation.RunAsync(form.Browser, server.Address("one"), server.Address("two"), Console.WriteLine);
                 await NavigationRuntimeValidation.RunPostAsync(form.Browser, server.Address("post"), Console.WriteLine);
                 await ValidateInitializationFailureAsync(form);

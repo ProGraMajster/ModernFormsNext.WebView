@@ -450,7 +450,8 @@ public class WebView : NativeViewHost
         }
         public void WebMessageReceived(long id, string message, Uri? source)
         {
-            if (Current(id) && owner.javaScriptEnabled) owner.WebMessageReceived?.Invoke(owner, new(message, source));
+            if (Current(id) && owner.javaScriptEnabled) owner.WebMessageReceived?.Invoke(owner,
+                new(message, source) { RequestId = id, PeerGeneration = identity });
         }
     }
 }

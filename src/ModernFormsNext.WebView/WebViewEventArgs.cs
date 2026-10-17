@@ -51,4 +51,13 @@ public sealed class WebViewMessageReceivedEventArgs(string message, Uri? source)
     public string Message { get; } = message;
     /// <summary>Gets an informational document URI, or null. This is not an authenticated origin.</summary>
     public Uri? Source { get; } = source;
+    /// <summary>Gets the original logical document request identity, or zero for manually constructed data.</summary>
+    /// <remarks>This is lifetime correlation only, never sender authentication.</remarks>
+    public long RequestId { get; internal init; }
+    /// <summary>Gets the owning peer generation, or zero for manually constructed data.</summary>
+    /// <remarks>Compare together with RequestId when forwarding through a reusable transport.</remarks>
+    public long PeerGeneration { get; internal init; }
+    /// <summary>Gets whether the baseline event authenticates the originating page/frame; always false.</summary>
+    /// <remarks>Even a same-origin iframe can invoke a parent helper. Privileged transports must use a separate qualified contract.</remarks>
+    public bool IsOriginAuthenticated => false;
 }
