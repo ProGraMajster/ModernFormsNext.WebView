@@ -17,6 +17,15 @@ previous stage's exact-head checks pass. New PRs are intentionally left unmerged
 | --- | --- | --- |
 | #33 | [PR #36](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/36), code `c001685` | Debug/Release 121/121; Windows/Android native PASS both; CI recorded on exact PR head |
 
+#33 final head `5466e712ed7bd276420a8374c105f3a878293f39` has terminal SUCCESS
+in [PR CI](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39043213480)
+and [push CI](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39043209196).
+Only after that verification, #11 implemented the [reusable untrusted transport](issue11-transport.md).
+Debug/Release: 128/128 tests, Windows/Android native PASS; no privileged handlers.
+Its dependent PR targets the #33 branch. #12 starts only after #11 exact-head CI succeeds.
+
+The sections below retain the historical first-delivery state of PR #35.
+
 ## Verified baseline and scope
 
 WebView main was clean at `12a3beace771c4b694479d2e635c1851cf75c2d5`, containing merged

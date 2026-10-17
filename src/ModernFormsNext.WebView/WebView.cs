@@ -260,6 +260,15 @@ public class WebView : NativeViewHost
         try { previous.Cancel(); } finally { previous.Dispose(); }
     }
 
+    // Reuse the control's existing lease/request/token. Transport layers must not maintain
+    // another document counter or infer readiness from Source or a native frame URL.
+    internal WebViewDocumentContext GetTransportDocument()
+    {
+        VerifyAccess();
+        return new(requestId, generation, documentLifetime.Token, IsInitialized && javaScriptEnabled &&
+            !isLoading && terminalRequestId == requestId && lastFailure is null && requested is not null);
+    }
+
     /// <summary>Returns a detached diagnostic snapshot; do not log Source without application redaction.</summary>
     public WebViewDiagnostics GetDiagnostics() => new(platform, engine, engineVersion, initializationState,
         source, isLoading, canGoBack, canGoForward, lastFailure, generation);

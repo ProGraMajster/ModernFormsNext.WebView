@@ -12,6 +12,7 @@ network policy parity or physical-device qualification.
 | Local public resources | Immutable bytes, isolated HTTPS origin, fixed CSP | Request interception with Document filter; capability false on unsupported runtime | API21+ ShouldInterceptRequest; worker-thread immutable snapshot, minSdk23 |
 | Privileged messaging/RPC | Not implemented; fail closed | No authorized handler dispatch | No authorized handler dispatch; AddJavascriptInterface cannot authenticate origin |
 | Baseline authentication metadata | IsOriginAuthenticated always false; original RequestId/PeerGeneration are lifetime correlation | Same-origin frames can invoke parent helper | Opaque frames can invoke annotated string bridge; Source=null |
+| Reusable transport | Optional borrowed wrapper, canonical context and cancellation | Existing native script/string path | Existing native script/string path; no origin authentication |
 | Initialization | Detached/Initializing/Ready/Failed/Disposed | Async environment/controller | Fresh View on UI thread |
 | Events | Main-frame Starting/Completed/Failed | Native NavigationId tracking | SDK callbacks; no native navigation ID |
 | Cancel navigation | Cancel Starting; restores committed request | Native Cancel | Main-frame preflight/override; incomplete POST interception |

@@ -57,6 +57,10 @@ JavaScript using JSON string serialization rather than interpolation of raw mess
 PostMessageAsync completion means submission, not delivery or authorization. Use a page-level
 acknowledgement for delivery. Cancellation cannot undo native script side effects already started.
 
+The optional [reusable transport](issue11-transport.md) preserves these rules. Its document
+snapshot and cancellation token correlate lifetimes only; neither authenticates a caller.
+It borrows the control, exposes no C# handlers and installs no JavaScript automatically.
+
 ## Native defaults and persistence
 
 Permissions default to denied (Android includes geolocation and file chooser). No camera,

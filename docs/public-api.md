@@ -101,12 +101,20 @@ UserAgent=null selects the platform default. Overrides reject empty/control-char
 apply before and after initialization, and affect future requests without automatically reloading.
 Advanced native settings objects are never exposed in shared API.
 
-## Designer
+## Reusable transport and message provenance
+
+`WebViewTransport : IWebViewTransport` is an opt-in borrowed adapter for scripts and
+untrusted strings. Its CurrentDocument contains the canonical token/identity/readiness;
+Dispose revokes its own calls/subscription without disposing the browser. No second
+document lifetime or host is created. See [transport](issue11-transport.md) for an
+example, dispatcher/cancellation/error semantics and original-message forwarding.
 
 Received baseline messages include RequestId/PeerGeneration captured before observer
 delivery. They remain original during reentrant navigation and are never authentication.
 IsOriginAuthenticated is always false, including for controlled local content. Neither
 adapter advertises AuthenticatedMessaging. See the [native security verification](issue33-security-validation.md).
+
+## Designer
 
 The inherited Skia placeholder says WebView and starts no browser/network operation.
 Source is hidden because the current Designer deliberately does not edit Uri or execute converters.
