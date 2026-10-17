@@ -12,7 +12,7 @@ and its new head rechecked before merge. Local main was fast-forwarded after eac
 | --- | --- | --- |
 | 1: #33/#11/#12 | #36/#37/#38 merged; scoped issues closed COMPLETED | Fresh full Debug/Release, 166/166 each; both native platforms PASS each |
 | 2: #16 | [#39](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/39) OPEN; executable AndroidX research, privileged NO-GO | Product Debug/Release 166/166; both native platforms PASS; research APK and recreation PASS both |
-| 3: #15 | Separate Windows hardening PR; PARTIAL, privileged NO-GO; issue stays OPEN | 22 extra Windows cases plus real old-packet ID-substitution fixture; final delivery evidence below |
+| 3: #15 | [#40](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/40) OPEN; PARTIAL hardening, privileged NO-GO; issue stays OPEN | Full Debug/Release 188/188 each; both native platforms PASS each |
 | 4: dependency audit | #17/#13/#18 blocked by privileged gate; #19 and #22 have independent bounded work | Live issue descriptions inspected; ROADMAP/DAG updated; no deferred handler/Blazor implementation |
 
 This report is a current view. Earlier records in phase2-progress preserve historical
@@ -90,6 +90,21 @@ found a revoked-helper/JS-toggle race that could strand completion; completion n
 without restoring the token, with a native Starting-observer regression. Both precede
 final qualification.
 Exact code/delivery SHAs, PR, final test and hosted CI results are recorded with delivery.
+
+Implementation `4b748f2a29cac7090c870adbd7b6b7295d5a203c`; open
+[PR #40](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/40) targets #39's
+branch, keeping separate issue delivery. Full final restore and sequential Debug/Release
+builds: 0 warnings/errors, **188/188 tests each** (139 shared, 37 Windows, 12 Android),
+no skips. Windows and Android ordinary native suites RUNTIME PASS both configurations.
+Both Windows executions include the corrected JS Starting race, captured old packet,
+current-ID substitution and positive current fence. Android signed APK builds also have
+0 warnings/errors. Logs: ignored `artifacts/issue15-final/`. Commands match Stage 1's
+portable testing instructions, including explicit emulator serial and JDK21.
+
+Subsequent delivery metadata changes documentation only. Exact final delivery head and
+terminal hosted shared/Windows/Android checks are recorded on #40 after those checks
+complete. Local native evidence qualifies the implementation separately from hosted
+compilation/tests. No new PR is merged automatically.
 
 ## Stage 4 — inspected issues and next order
 

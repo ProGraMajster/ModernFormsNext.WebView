@@ -109,3 +109,33 @@ publication remain untouched.
 #13/#17/#18 stay gated by the unsatisfied privileged contract. #19 can independently
 extend existing unprivileged RPC error/cancellation behavior without exporting handlers.
 #22 is a separate feasibility experiment, not a full BlazorWebView implementation.
+
+## Final local execution and PR delivery
+
+Delivered in open [PR #40](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/40),
+based on #39's verified head `96becb8a4692b9b9de0086c377b05521f6653d7c`.
+Implementation: `4b748f2a29cac7090c870adbd7b6b7295d5a203c`. Subsequent delivery metadata
+changes documentation only; the PR records its exact final head and terminal hosted checks.
+
+| Final check | Debug | Release |
+| --- | --- | --- |
+| Full solution restore/build | PASS, 0 warnings/errors | PASS, 0 warnings/errors |
+| All regression tests | 188/188, no skips | 188/188, no skips |
+| Windows real WebView2 validator | RUNTIME PASS, including JS Starting race | RUNTIME PASS, including JS Starting race |
+| Android ordinary signed APK build | PASS, 0 warnings/errors | PASS, 0 warnings/errors |
+| Android API34 emulator validator | RUNTIME PASS | RUNTIME PASS |
+
+Test split: 139 shared, 37 Windows, 12 Android policy. Final local evidence is in ignored
+`artifacts/issue15-final/`; earlier runs are not substituted for the corrected race test.
+The AndroidX research native evidence remains separately documented in #16; this Windows
+change does not modify that probe or Android product sources.
+
+Commands: solution `dotnet restore`, full Debug/Release `dotnet build --no-restore -m:1
+-p:UseSharedCompilation=false -p:GeneratePackageOnBuild=false`, source root pinned externally,
+`dotnet test --no-build --no-restore -m:1`; Windows sample `--validate`; Android sample
+`-t:SignAndroidPackage` with JDK21, explicit `adb -s emulator-5554` install and validation
+Intent, PID-filtered logs. [Testing](testing.md) contains portable command examples.
+
+Hosted workflow separately runs shared, Windows and Android jobs, including research APK
+compilation. It does not execute these local native validators. Issue #15 and PR #40 stay
+open; this is useful hardening with an unresolved original-caller security gate.

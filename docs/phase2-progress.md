@@ -12,6 +12,11 @@ for the tested same-origin parent-relay threat. #13/#17/#18 remain gated, while 
 extend unprivileged RPC independently and #22 can perform its bounded feasibility spike.
 No handler/Hybrid/Blazor implementation, release or framework-pin change is implied.
 
+#15 delivery: open [PR #40](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/40),
+implementation `4b748f2a29cac7090c870adbd7b6b7295d5a203c`; final Debug/Release 188/188
+each, zero skips/warnings/errors, Windows/Android native RUNTIME PASS both configurations.
+The exact final delivery head and terminal hosted CI links are recorded on that PR.
+
 ## Subsequent audit and AndroidX research
 
 #36 → #37 → #38 were audited and normally merged; local/remote main became
