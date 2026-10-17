@@ -137,3 +137,7 @@ Final execution counts, PR and hosted exact-head results are recorded with deliv
 No release, package publication, main-framework/pin modification, authentication upgrade
 or privileged dispatch. No template changes. The issue/PR remains for review; native SDK
 research execution is separate from hosted compilation and the unexecuted lanes above.
+
+Delivered in [PR #39](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/39),
+implementation `7020ed7`, intentionally open for review. Hosted final-head status/SHA
+is recorded in that PR separately from local SDK/native evidence.

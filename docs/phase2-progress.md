@@ -10,6 +10,10 @@ heads/merges and fresh Debug/Release 166/166 plus Windows/Android native PASS bo
 privileged NO-GO decision from a real same-origin parent-object relay. #17/#13 remain gated.
 The earlier delivery records below are historical, including references to then-open PRs.
 
+#16 delivery: [PR #39](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/39),
+implementation `7020ed7`; product regressions 166/166 Debug/Release, both native platforms
+PASS; research APK and Activity recreation PASS both, privileged policy NO-GO.
+
 ## Sequential follow-up
 
 PR #35 completed a final audit and normal merge `79eaff579755578ce5a1faf19c861ffba86719d1`.
