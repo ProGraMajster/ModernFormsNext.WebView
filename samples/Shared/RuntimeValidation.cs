@@ -11,6 +11,7 @@ internal static class RuntimeValidation
         report("PASS initialize: " + JsonSerializer.Serialize(browser.GetDiagnostics()));
         await MessageSecurityRuntimeValidation.RunAsync(browser, report);
         await TransportRuntimeValidation.RunAsync(browser, report);
+        await RpcRuntimeValidation.RunAsync(browser, report);
         await LocalContentRuntimeValidation.RunAsync(browser, report);
         await NavigateAsync(browser, () => browser.NavigateToHtml(TestContent.Html));
         report("PASS raw HTML + navigation events");

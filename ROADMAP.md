@@ -78,3 +78,5 @@ Follow-up #33 provides native hostile-frame/redirect/lifetime evidence in PR #36
 The [#11 transport](docs/issue11-transport.md) reuses canonical document cancellation
 without exposing privileged handlers. #12 remains a separate dependent protocol change;
 #13/#15/#17 still require independently verified authenticated platform messaging.
+[#12 RPC](docs/issue12-rpc.md) builds on #11 with explicit unprivileged app-to-JavaScript
+calls only; bounded protocol validation is independent of the pending authentication gate.

@@ -12,6 +12,7 @@ consumes it without defining another hosting or platform service system.
 - [Hybrid trust matrix and prerequisites](hybrid-security.md)
 - [Baseline messaging native verification (#33)](issue33-security-validation.md)
 - [Reusable transport (#11)](issue11-transport.md)
+- [Versioned unprivileged RPC (#12)](issue12-rpc.md)
 - [PR #35 final audit and merge](pr35-final-audit.md)
 - [Phase 2 progress, dependency and release gates](phase2-progress.md)
 - [Platform capabilities and limitations](capabilities.md)

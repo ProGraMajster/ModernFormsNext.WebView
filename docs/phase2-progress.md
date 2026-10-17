@@ -17,13 +17,23 @@ previous stage's exact-head checks pass. New PRs are intentionally left unmerged
 | --- | --- | --- |
 | #33 | [PR #36](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/36), code `c001685` | Debug/Release 121/121; Windows/Android native PASS both; CI recorded on exact PR head |
 | #11 | [PR #37](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/37), code `efccb3c` | Debug/Release 128/128; Windows/Android native PASS both; targets #36 branch |
+| #12 | [PR #38](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/38), code `b9225fe` | Debug/Release 166/166; Windows/Android native PASS both; targets #37 branch |
 
 #33 final head `5466e712ed7bd276420a8374c105f3a878293f39` has terminal SUCCESS
 in [PR CI](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39043213480)
 and [push CI](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39043209196).
 Only after that verification, #11 implemented the [reusable untrusted transport](issue11-transport.md).
 Debug/Release: 128/128 tests, Windows/Android native PASS; no privileged handlers.
-Its dependent PR targets the #33 branch. #12 starts only after #11 exact-head CI succeeds.
+Its dependent PR targets the #33 branch. #11 final head
+`9b03ae8d3b08e2d4f2d4196758dd31a4d8d38a39` has terminal SUCCESS in
+[PR CI](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39044791926)
+and [push CI](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39044788970).
+Only then #12 started on `work/issue-12-rpc`, based on that verified head.
+It adds [bounded versioned RPC](issue12-rpc.md) for unprivileged app-to-JavaScript calls;
+there is no inbound C# dispatch or authentication upgrade. Its PR targets #11's branch.
+Its final local Debug/Release builds have 0 warnings/errors and 166/166 tests each;
+Windows and Android emulator native suites PASS in both configurations. The stage
+report distinguishes native evidence, hosted CI and unexecuted qualification lanes.
 
 The sections below retain the historical first-delivery state of PR #35.
 

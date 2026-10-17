@@ -56,6 +56,7 @@ opaque iframe bridge calls, stale packets after native document replacement, Win
 foreign HTTP iframe/HTTP302 and Android page-initiated meta redirect. Every accepted
 baseline event remains untrusted. Privileged transport qualification remains NOT RUN
 because that transport is not implemented; these tests do not qualify #15/#17.
-Malformed/oversized RPC/version/duplicate ID/timeout tests belong with #12; they are not
-claimed by the static-resource tests. Baseline malformed packets remain covered by the
-existing native fixture. See [phase2-progress](phase2-progress.md) for exact execution results.
+The [#12 protocol](issue12-rpc.md) adds malformed/oversized/version/duplicate/deadline
+checks separately from the static-resource tests. It supports only explicit app-to-page
+JavaScript calls and untrusted data responses; no C# handler exposure or authenticated
+platform capability is added. See [phase2-progress](phase2-progress.md) for execution results.
