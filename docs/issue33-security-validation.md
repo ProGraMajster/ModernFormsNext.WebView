@@ -1,5 +1,8 @@
 # #33 — baseline messaging security verification
 
+Delivery: [PR #36](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/36),
+implementation `c001685`. The PR records terminal checks on its exact final head.
+
 Branch `feature/issue-33-message-security`, based on merged main `79eaff5`.
 This verifies the untrusted baseline and makes its missing authentication detectable;
 it does not implement privileged Windows/Android messaging or a handler registry.

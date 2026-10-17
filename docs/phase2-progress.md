@@ -13,6 +13,10 @@ Debug/Release 121/121 and both native platforms PASS; privileged transport is no
 The next stages #11/#12 remain separate branches/PRs and are started only after the
 previous stage's exact-head checks pass. New PRs are intentionally left unmerged.
 
+| Follow-up | Delivery | Local validation |
+| --- | --- | --- |
+| #33 | [PR #36](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/36), code `c001685` | Debug/Release 121/121; Windows/Android native PASS both; CI recorded on exact PR head |
+
 ## Verified baseline and scope
 
 WebView main was clean at `12a3beace771c4b694479d2e635c1851cf75c2d5`, containing merged
