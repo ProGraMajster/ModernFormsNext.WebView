@@ -81,7 +81,7 @@ Android uses the installed JDK21/SDK36 workload and the explicitly selected emul
 | Windows Debug / Release native | PASS both; WebView2 155.0.4283.60, full baseline and local resources, cancellation/reload, CSP, missing resources, 50 leases, initialization races and local reparent/replay |
 | Android Debug / Release emulator | PASS both; signed APKs built with no warnings/errors, installed only on emulator-5554, API34 x86_64 density420, com.google.android.webview/113.0.5672.136; full baseline and local fixtures RUNTIME PASS |
 | Android rotation / Home-resume | PASS Debug local document replay, fresh Activity/peer generation 1 -> 3; original rotation settings restored; screenshot inspected (limited visual evidence only) |
-| Hosted CI exact head | NOT RUN until push; tracked below |
+| Hosted CI implementation head | PASS all three jobs (shared/Windows/Android) on `50bdb43033febcad258a1322393f9034247fca3c`; [push run 39037796081](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39037796081). Documentation-only delivery updates rerun checks on PR #35. |
 | Foreground keyboard injection | NOT RUN; no foreground interactive qualification attempted |
 | API23 runtime / physical device / Visual Studio Designer / full IME/DPI/accessibility/heap soak | NOT RUN; outside available qualification in this increment |
 | Template verification | Not applicable; main templates/reference app untouched |
@@ -126,6 +126,18 @@ The complete dependency/release DAG is in [ROADMAP](../ROADMAP.md).
 
 ## Delivery
 
-Bootstrap commit: `50d054d` (isolated pinned dependency destination). Implementation SHA,
-PR URL and terminal hosted CI status are appended after creation. No issues
-will be closed, no PR merged and no NuGet/preview/stable/GitHub release published here.
+Delivered as [PR #35](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/35),
+targeting main, intentionally OPEN for review.
+
+- Bootstrap: `50d054d` — isolate the pinned dependency checkout from central NuGet inheritance.
+- Implementation: `50bdb43033febcad258a1322393f9034247fca3c` — bounded local resources,
+  both adapters, examples, regressions, policy and dependency/release documentation.
+- Hosted implementation CI: [39037796081](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39037796081)
+  is terminal SUCCESS on that exact implementation SHA, with shared, Windows and Android
+  jobs all successful. [PR run 39037798953](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39037798953)
+  and any documentation-only follow-up checks are linked by the PR; their status is not
+  inferred from this earlier run. The final chat/PR check summary records the final head.
+
+This report's delivery update changes documentation only. Local execution evidence above
+qualifies the implementation, while hosted checks remain separately identifiable by SHA.
+No issues were closed, no PR merged and no NuGet/preview/stable/GitHub release published.
