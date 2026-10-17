@@ -89,3 +89,6 @@ Physical/API23 runtime, foreground keyboard injection, Visual Studio Designer,
 full IME/DPI/accessibility and retained-heap soak: NOT EXECUTED. No template changes
 or template verification needed. Native tests are separate from hosted CI; no release
 or stable API guarantee is claimed. Delivery/exact-head checks are linked by the PR.
+
+Delivered as [PR #37](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/37),
+implementation `efccb3c`, targeting #36's branch and intentionally unmerged.
