@@ -1,5 +1,19 @@
 # Phase 2 progress — 2026-10-17
 
+## Subsequent audit and AndroidX research
+
+#36 → #37 → #38 were audited and normally merged; local/remote main became
+`f4017e7be66eeebf235e9e296caf1e5e7855ad19`, with terminal successful CI. Issues #33/#11/#12
+are closed for their scoped criteria. [Merge audit](pr36-38-final-audit.md) records exact
+heads/merges and fresh Debug/Release 166/166 plus Windows/Android native PASS both.
+[#16](issue16-android-origin-research.md) now has an isolated AndroidX SDK prototype and a
+privileged NO-GO decision from a real same-origin parent-object relay. #17/#13 remain gated.
+The earlier delivery records below are historical, including references to then-open PRs.
+
+#16 delivery: [PR #39](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/39),
+implementation `7020ed7`; product regressions 166/166 Debug/Release, both native platforms
+PASS; research APK and Activity recreation PASS both, privileged policy NO-GO.
+
 ## Sequential follow-up
 
 PR #35 completed a final audit and normal merge `79eaff579755578ce5a1faf19c861ffba86719d1`.

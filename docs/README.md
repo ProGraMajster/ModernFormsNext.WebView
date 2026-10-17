@@ -13,6 +13,8 @@ consumes it without defining another hosting or platform service system.
 - [Baseline messaging native verification (#33)](issue33-security-validation.md)
 - [Reusable transport (#11)](issue11-transport.md)
 - [Versioned unprivileged RPC (#12)](issue12-rpc.md)
+- [PR #36–#38 final audit and sequential merges](pr36-38-final-audit.md)
+- [AndroidX origin/frame prototype and ADR (#16)](issue16-android-origin-research.md)
 - [PR #35 final audit and merge](pr35-final-audit.md)
 - [Phase 2 progress, dependency and release gates](phase2-progress.md)
 - [Platform capabilities and limitations](capabilities.md)
