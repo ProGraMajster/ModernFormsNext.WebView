@@ -165,3 +165,6 @@ Visual Studio Designer, full IME/DPI/accessibility/retained-heap soak, published
 qualification. Template verification is not applicable. No native authentication capability,
 C# handlers, framework/pin changes, new dependencies, packages or releases. The dependent
 PR/exact final-head hosted results are tracked separately from this local execution evidence.
+
+Delivered as [PR #38](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/38),
+implementation `b9225fe`, targeting #37's branch and intentionally unmerged.

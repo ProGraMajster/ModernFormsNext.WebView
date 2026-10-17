@@ -17,6 +17,7 @@ previous stage's exact-head checks pass. New PRs are intentionally left unmerged
 | --- | --- | --- |
 | #33 | [PR #36](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/36), code `c001685` | Debug/Release 121/121; Windows/Android native PASS both; CI recorded on exact PR head |
 | #11 | [PR #37](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/37), code `efccb3c` | Debug/Release 128/128; Windows/Android native PASS both; targets #36 branch |
+| #12 | [PR #38](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/38), code `b9225fe` | Debug/Release 166/166; Windows/Android native PASS both; targets #37 branch |
 
 #33 final head `5466e712ed7bd276420a8374c105f3a878293f39` has terminal SUCCESS
 in [PR CI](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39043213480)
