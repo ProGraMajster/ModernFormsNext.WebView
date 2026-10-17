@@ -13,6 +13,10 @@ dotnet test ./ModernFormsNext.WebView.slnx -c Debug --no-restore -p:ModernFormsN
 ```
 
 The bootstrap checks out exactly 69c5ea2b20b07d9df801340c8ae9e3e1ca5dfbc3 (#60 merged).
+Its default destination is a sibling `.modernformsnext-webview/framework-69c5ea2` directory,
+outside this repository. Do not put a source checkout under this repository: NuGet would
+inherit its Directory.Packages.props and reject the framework's explicit package versions.
+Existing checkouts are never moved or overwritten. CI already uses sibling directories.
 An explicit source root is required: an older published framework package cannot supply this
 contract. A missing root/NativeViewHost fails with a useful build error. The project files contain
 no machine-specific ProjectReference. Keep dependency clones and build artifacts ignored.
@@ -39,6 +43,13 @@ SDK callbacks, frame filtering, settings, JNI lifetime and Activity integration 
 emulator/device path. No Android behavior is inferred from the host-runnable net10.0 build.
 
 ## Windows native path
+
+Both native validators now also load local HTML/CSS/JS/PNG and verify fixed-CSP inline,
+frame and fetch denial, collection replacement/reload and inactive namespace denial.
+The Windows cross-window replay fixture also replays local resources. Deterministic
+resource tests cover traversal/escaping, authority spoofing, size/MIME/method bounds,
+buffer isolation, concurrent readers, stale callbacks and unsupported peer behavior.
+These checks do not qualify privileged message origin/frame authentication.
 
 ```powershell
 dotnet run --project ./samples/ModernFormsNext.WebView.Sample.Windows -c Debug --no-build -- --validate

@@ -5,6 +5,17 @@ The dependency pin is main framework merge commit
 read-only for this feature. Its public native-hosting and API-review documents are
 authoritative for placement, airspace and session ownership.
 
+The Phase 2 audit compared these public hosting files with framework master
+`307f08be46708d83222c93aac1912f81cf77d79a`: NativeViewHost, NativeViewHosting and the
+typed Windows/Android site contracts are unchanged. No pin update or framework patch
+is needed. This is a contract comparison, not qualification against unpinned source.
+
+Local resource collections travel as an additive WebViewNavigationRequest.LocalContent
+value through the same lease. An optional peer capability prevents old adapters from
+silently treating local resource requests as remote navigation. Native interception uses
+immutable bytes and never adds a host, dispatcher, focus/DPI manager or resource server.
+See [local content](local-content.md) and [Hybrid trust boundaries](hybrid-security.md).
+
 ```text
 WebView : NativeViewHost
   -> feature factory -> registered IWebViewPeerFactoryProvider

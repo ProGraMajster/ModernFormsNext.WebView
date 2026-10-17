@@ -1,4 +1,6 @@
-param([string] $Destination = (Join-Path $PSScriptRoot '../.dependencies/framework'))
+# Keep the dependency outside this repository: otherwise NuGet searches upward and
+# accidentally applies this extension's central package versions to the pinned framework.
+param([string] $Destination = (Join-Path $PSScriptRoot '../../.modernformsnext-webview/framework-69c5ea2'))
 $ErrorActionPreference = 'Stop'
 $frameworkCommit = '69c5ea2b20b07d9df801340c8ae9e3e1ca5dfbc3'
 if (Test-Path -LiteralPath $Destination) {

@@ -84,7 +84,8 @@ public class WebView : NativeViewHost
     [Browsable(false), DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public WebViewCapabilities BrowserCapabilities => IsInitialized ? WebViewCapabilities.UriNavigation |
         WebViewCapabilities.RawHtml | WebViewCapabilities.History | WebViewCapabilities.Scripting |
-        WebViewCapabilities.Messaging | WebViewCapabilities.NavigationCancellation | WebViewCapabilities.UserAgent : WebViewCapabilities.None;
+        WebViewCapabilities.Messaging | WebViewCapabilities.NavigationCancellation | WebViewCapabilities.UserAgent |
+        (lease?.Peer is IWebViewLocalContentPeer { SupportsLocalContent: true } ? WebViewCapabilities.LocalContent : WebViewCapabilities.None) : WebViewCapabilities.None;
 
     /// <summary>Gets or enables JavaScript and the minimal string bridge; defaults to false.</summary>
     /// <remarks>UI thread only. Disabling cancels outstanding scripts/messages. Page code is untrusted.</remarks>
@@ -155,6 +156,23 @@ public class WebView : NativeViewHost
         Submit(new(++requestId, null, html));
     }
 
+    /// <summary>Loads explicitly public application resources at their isolated HTTPS origin.</summary>
+    /// <remarks>
+    /// UI thread only. No filesystem mapping or server is created. Fixed CSP allows same-origin
+    /// external scripts/styles/images only; JavaScript still defaults off. Navigation/reload and
+    /// canonical host recreation retain the immutable collection. Messages remain untrusted.
+    /// Unsupported ready adapters throw NotSupportedException; queued requests fail with Engine
+    /// on initialization if interception is unavailable. Does not trigger framework layout.
+    /// </remarks>
+    public void NavigateToLocalContent(WebViewLocalContent content, string entryPath = "index.html")
+    {
+        VerifyAccess(); ArgumentNullException.ThrowIfNull(content);
+        Uri uri = content.GetUri(entryPath);
+        if (IsInitialized && lease?.Peer is not IWebViewLocalContentPeer { SupportsLocalContent: true })
+            throw new NotSupportedException("This browser does not support controlled local resources.");
+        Submit(new(++requestId, uri, null) { LocalContent = content });
+    }
+
     private void Submit(WebViewNavigationRequest request)
     {
         CancelDocumentOperations(); requested = request; source = request.Uri; isLoading = false;
@@ -167,8 +185,18 @@ public class WebView : NativeViewHost
     /// <summary>Goes forward on the UI thread; returns false while loading or without an active history entry.</summary>
     public bool GoForward() { VerifyAccess(); if (!IsInitialized || isLoading || !canGoForward) return false; NewCommand(false); lease?.Peer.GoForward(requestId); return true; }
     /// <summary>Reloads on the UI thread; returns false while loading, detached or without a logical page.</summary>
-    public bool Reload() { VerifyAccess(); if (!IsInitialized || isLoading || requested is null) return false; NewCommand(true); lease?.Peer.Reload(requestId); return true; }
-    private void NewCommand(bool preserveHtml) { ++requestId; CancelDocumentOperations(); requested = new(requestId, source, preserveHtml ? requested?.Html : null); }
+    public bool Reload()
+    {
+        VerifyAccess(); if (!IsInitialized || isLoading || requested is null) return false;
+        if (requested.LocalContent is not null && lease?.Peer is not IWebViewLocalContentPeer { SupportsLocalContent: true }) return false;
+        NewCommand(true);
+        // Reapply the collection after a canceled replacement may have revoked native
+        // resource access. Reloading local content reissues the current URI explicitly.
+        if (requested!.LocalContent is not null) lease?.Peer.Navigate(requested);
+        else lease?.Peer.Reload(requestId);
+        return true;
+    }
+    private void NewCommand(bool preserveHtml) { ++requestId; CancelDocumentOperations(); requested = new(requestId, source, preserveHtml ? requested?.Html : null) { LocalContent = requested?.LocalContent }; }
 
     /// <summary>Stops loading and cancels pending document operations; no-op when detached.</summary>
     /// <remarks>UI thread only. Late completion for the stopped request cannot update state.</remarks>
@@ -255,7 +283,7 @@ public class WebView : NativeViewHost
         finally
         {
             try { base.Dispose(true); }
-            finally { documentLifetime.Dispose(); isLoading = canGoBack = canGoForward = false; }
+            finally { documentLifetime.Dispose(); requested = committed = null; isLoading = canGoBack = canGoForward = false; }
         }
     }
 
@@ -336,7 +364,9 @@ public class WebView : NativeViewHost
             if (owner.requestId == beforeNotification && owner.requested is { } previous)
             {
                 var replay = previous with { Id = ++owner.requestId }; owner.requested = replay;
-                owner.lease?.Peer.Navigate(replay);
+                if (replay.LocalContent is not null && owner.lease?.Peer is not IWebViewLocalContentPeer { SupportsLocalContent: true })
+                    NavigationFailed(replay.Id, replay.Uri, WebViewErrorCategory.Engine);
+                else owner.lease?.Peer.Navigate(replay);
             }
         }
         public void InitializationFailed(WebViewErrorCategory category)
@@ -351,12 +381,17 @@ public class WebView : NativeViewHost
         {
             if (!IsCurrent) return 0;
             ++owner.requestId; owner.CancelDocumentOperations();
-            owner.requested = new(owner.requestId, owner.source, null);
+            owner.requested = new(owner.requestId, owner.source, null) { LocalContent = owner.requested?.LocalContent };
             return owner.requestId;
         }
         public bool NavigationStarting(long id, Uri? uri, bool isRedirect)
         {
             if (!Current(id)) return false;
+            // Local documents may navigate only inside their collection. This is defense
+            // in depth alongside response CSP, never a claim of complete network interception.
+            if (owner.requested?.LocalContent is { } content &&
+                (uri is null || !uri.IsAbsoluteUri || !uri.AbsoluteUri.StartsWith(content.Origin.AbsoluteUri, StringComparison.Ordinal)))
+            { NavigationFailed(id, uri, WebViewErrorCategory.InvalidAddress); return false; }
             // Engine-private data/about addresses used for raw HTML, including Reload,
             // are represented by null in the logical API and never bypass URI policy
             // for a later user navigation (BeginNativeNavigation clears the HTML request).
@@ -389,7 +424,7 @@ public class WebView : NativeViewHost
             if (!Current(id) || owner.terminalRequestId == id) return;
             owner.terminalRequestId = id;
             owner.source = owner.requested?.Html is null ? uri : null;
-            owner.committed = owner.requested = new(id, owner.source, owner.requested?.Html);
+            owner.committed = owner.requested = new(id, owner.source, owner.requested?.Html) { LocalContent = owner.requested?.LocalContent };
             try { owner.NavigationCompleted?.Invoke(owner, new(id, owner.source, httpStatusCode)); }
             finally { Settle(id); }
         }

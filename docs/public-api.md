@@ -37,6 +37,15 @@ belonging to a newer request.
 
 ## Events and reentrancy
 
+For local resources use `NavigateToLocalContent(WebViewLocalContent, entryPath = "index.html")`.
+`BrowserCapabilities.LocalContent` detects ready native interception support. This reports
+a real HTTPS Source and retains the collection for reload/recreation; local reload reissues
+that URI to reapply a revoked mapping. `WebViewLocalContent` copies inputs, validates paths,
+infers MIME and exposes GetUri/CreateResponse for deterministic adapters. Responses expose
+immutable headers and fresh read-only streams. `IWebViewLocalContentPeer` is an optional
+adapter contract preserving baseline adapters. See [local content](local-content.md) for
+limits, CSP, lifetime, unsupported-peer behavior and the complete example.
+
 NavigationStarting is cancelable and provides RequestId, Uri and IsRedirect. Windows uses the
 native redirect flag; Android classifies ongoing load callbacks with limited SDK information.
 No user/programmatic flag is exposed. For accepted requests the order is Starting -> loading=true

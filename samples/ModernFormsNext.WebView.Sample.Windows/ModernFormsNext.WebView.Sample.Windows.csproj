@@ -10,5 +10,6 @@
     <ProjectReference Include="../../src/ModernFormsNext.WebView.Windows/ModernFormsNext.WebView.Windows.csproj" />
     <Compile Include="../Shared/*.cs" Link="Shared/%(Filename)%(Extension)" />
     <EmbeddedResource Include="../Shared/test-page.html" Link="test-page.html" />
+    <EmbeddedResource Include="../Shared/LocalContent/*" Link="LocalContent/%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

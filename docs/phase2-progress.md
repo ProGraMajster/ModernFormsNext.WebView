@@ -1,0 +1,143 @@
+# Phase 2 progress — 2026-10-17
+
+## Verified baseline and scope
+
+WebView main was clean at `12a3beace771c4b694479d2e635c1851cf75c2d5`, containing merged
+[PR #9](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/9).
+Work branch: `feature/webview-phase2-secure-foundation`, from that exact origin/main.
+There were no other open WebView PRs at audit. Main framework master was
+`307f08be46708d83222c93aac1912f81cf77d79a`, with no open PRs at audit; its local untracked
+configuration was preserved. Framework issues were inspected, including open umbrella #20.
+
+The bootstrap pin remains `69c5ea2b20b07d9df801340c8ae9e3e1ca5dfbc3`.
+Diff inspection against current framework master found no changes in NativeViewHost,
+NativeViewHosting, WindowsNativeViewSite or AndroidNativeViewSite. No framework change,
+floating dependency, dependency update or unpinned runtime qualification was performed.
+The bootstrap now defaults outside this repository to prevent inherited NuGet central
+versions (the original nested checkout produced NU1008). Existing checkouts were preserved.
+
+All GitHub WebView issues #1-#8 and #10-#34 were **OPEN** at audit; no #9 issue exists
+because that number is the merged PR. Status below describes work, not GitHub closure.
+DONE means a bounded implemented/documented deliverable; it never asserts a release.
+
+| Issues | Work status | Evidence / remaining gate |
+| --- | --- | --- |
+| #1 | DONE baseline architecture | Merged baseline; new trust boundaries documented separately |
+| #2 | DONE external contract | Main #60/#197; consumed unchanged, not reimplemented |
+| #3 | DONE baseline implementation | Shared control, API/Designer/callback tests; public stability review separate |
+| #4 | IN PROGRESS qualification | Windows code and native baseline; full focus/DPI/IME/heap matrix pending |
+| #5 | IN PROGRESS qualification | Android code and emulator baseline; API23/physical qualification pending |
+| #6 | IN PROGRESS qualification | Two native samples and three suites; extended manual qualification pending |
+| #7, #8 | BLOCKED release | Official framework package, platform commitments, packaging and explicit owner approval; no Hybrid/Blazor dependency |
+| #10 | IN PROGRESS | Architecture decision and trust matrix supplied; optional privileged API not approved/implemented |
+| #11, #12 | NOT STARTED | Next code increment: reusable transport, bounded versioned RPC; no public skeleton added |
+| #13 | BLOCKED | Requires RPC and authenticated platform transport before handler exposure |
+| #14, #32 | IN PROGRESS | Useful immutable static-resource increment implemented; merge and broader platform qualification remain |
+| #15 | BLOCKED | Requires #11/#12 and privileged native origin/frame/lifecycle tests |
+| #16 | NOT STARTED implementation | Official APIs inspected; AndroidX feature/binding prototype and ADR still required |
+| #17 | BLOCKED | Current AddJavascriptInterface cannot authenticate caller; requires verified #16 plus #12/#14/#33 |
+| #18-#20 | BLOCKED | Depend on verified transport/RPC/handlers; ordinary resource sample is not a Hybrid sample |
+| #21 | BLOCKED release | Separate platform qualification and explicit approval; no preview created |
+| #22 | NOT STARTED | No Blazor feasibility experiment or GO is claimed |
+| #23-#27 | BLOCKED | Requires positive #22 and subsequent host/assets/component prerequisites |
+| #28, #30 | BLOCKED | Android Blazor feasibility; overlapping descriptions require maintainer consolidation |
+| #29, #31 | BLOCKED | Qualified optional Blazor layer; overlapping package/sample descriptions |
+| #33 | IN PROGRESS | Trust matrix, baseline source/ID non-authentication and stale tests, local native frame CSP; privileged hostile-frame/redirect matrix pending |
+| #34 | DONE scoped DAG | ROADMAP contains separate baseline/Hybrid/Blazor gates; approval and issue closure remain external |
+
+## Implemented increment
+
+- `WebViewLocalContent`: copied bounded allowlist, isolated per-collection HTTPS origin,
+  canonical ASCII paths, explicit MIME, fixed CSP and other security headers, no CORS,
+  GET/HEAD, empty 400/404/405/410, pure concurrent response resolution and read-only streams.
+- Additive `NavigateToLocalContent`, `LocalContent` capability/request property and optional
+  `IWebViewLocalContentPeer`; existing adapters keep ordinary operations and fail closed
+  for unsupported local content. No native types enter shared API.
+- WebView2 Document request interception and API23-compatible Android interception with
+  worker-safe immutable snapshots, retirement before cleanup, reload/cancel/replay semantics.
+- Both samples load HTML/CSS/JS/PNG without a server. Native fixtures cover CSP inline,
+  frame/connect denial, missing image, reload, replacement, canceled replacement, inactive
+  origin and Windows local reparent/replay alongside the full pre-existing baseline path.
+- Deterministic path/encoding/authority/method/MIME/size/immutability/threading negatives,
+  unsupported capabilities, stale/reentrant document callbacks and Source/ID trust regression.
+- XML docs/examples; local-content and Hybrid security decisions; architecture/public API,
+  capabilities, security, testing, README, roadmap and historical-review cross-references.
+
+No framework edits, second host, new dependencies, directory/file access, HTTP listener,
+privileged RPC, reflection exposure, ASP.NET Core, version assignment or publication.
+
+## Validation
+
+Final results are recorded after execution below; historical PR #9 evidence is not reused
+as a new PASS. Commands follow [testing](testing.md), with the external pinned source root,
+SDK 10.0.401, sequential `-m:1 -p:UseSharedCompilation=false` and package generation off.
+Android uses the installed JDK21/SDK36 workload and the explicitly selected emulator.
+
+| Check | Current result |
+| --- | --- |
+| Bootstrap / solution restore | PASS; exact pin, external checkout, no checkout overwritten |
+| Debug solution build / tests | PASS; 0 warnings/errors; 110/110 (83 shared, 15 Windows, 12 Android), no skips |
+| Release solution build / tests | PASS; 0 warnings/errors; 110/110, no skips |
+| Windows Debug / Release native | PASS both; WebView2 155.0.4283.60, full baseline and local resources, cancellation/reload, CSP, missing resources, 50 leases, initialization races and local reparent/replay |
+| Android Debug / Release emulator | PASS both; signed APKs built with no warnings/errors, installed only on emulator-5554, API34 x86_64 density420, com.google.android.webview/113.0.5672.136; full baseline and local fixtures RUNTIME PASS |
+| Android rotation / Home-resume | PASS Debug local document replay, fresh Activity/peer generation 1 -> 3; original rotation settings restored; screenshot inspected (limited visual evidence only) |
+| Hosted CI implementation head | PASS all three jobs (shared/Windows/Android) on `50bdb43033febcad258a1322393f9034247fca3c`; [push run 39037796081](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39037796081). Documentation-only delivery updates rerun checks on PR #35. |
+| Foreground keyboard injection | NOT RUN; no foreground interactive qualification attempted |
+| API23 runtime / physical device / Visual Studio Designer / full IME/DPI/accessibility/heap soak | NOT RUN; outside available qualification in this increment |
+| Template verification | Not applicable; main templates/reference app untouched |
+
+Initial validation exposed NU1008 from inherited central versions, an expected WebView2
+navigation failure for empty 410 and Android's generated error DOM. Bootstrap and fixture
+semantics were corrected; no empty browser DOM is promised for a denied request. An early
+accidental build/test overlap produced file-lock warnings; those runs are not final build
+evidence. Sequential checks passed afterwards without relaxing tests, retries or security.
+
+Final review also added a regression for Reload of a retained unsupported local request:
+it returns false and cannot bypass capability rejection. Relative native callback URIs
+are rejected without reading AbsoluteUri on a relative value. The native suite does not
+replace physical/API23/retained-heap/privileged-origin qualification. No AAB or publication
+was attempted in this increment.
+
+Commands executed: bootstrap; solution restore; sequential Debug and Release solution
+builds and `dotnet test --no-build --no-restore`; Windows sample `--validate` in both
+configurations; Android sample `-t:SignAndroidPackage` in both, explicit JDK21;
+`adb -s emulator-5554 install`, explicit validation Intent, PID-filtered logs, rotation
+and Home/resume. Portable build/native commands are in [testing](testing.md).
+
+## Limits and next sequence
+
+This is bounded **static public content**, not authenticated Hybrid content or a network
+sandbox. Android request interception is incomplete for redirects; its string interface
+cannot identify caller frames. CSP excludes frames/workers/network fetch and inline code;
+native application ExecuteScriptAsync remains explicitly authorized. Browser-normalized
+traversal can only select public allowlisted keys. History does not keep old collections
+mapped and native cross-origin navigation is rejected; cancel may revoke visible-page
+resources until local Reload reapplies its collection.
+Response streams already handed to an engine remain readable after retirement; no new
+private I/O or callback is involved. See [local-content](local-content.md) and
+[hybrid-security](hybrid-security.md) for the complete policy and native API references.
+
+Next bounded increments: #33 broader native hostile-origin/frame/redirect/lifecycle evidence,
+then #11 transport and #12 RPC in separate reviewable changes; #16 can run independently as
+an origin/frame feature prototype without enabling privileged Android calls. Only then #15,
+#17 where supported, and #13/#18/#19/#20. #21 is a separate release gate. #22 is optional
+and must deliver a runnable go/no-go experiment before any #23-#31 implementation.
+The complete dependency/release DAG is in [ROADMAP](../ROADMAP.md).
+
+## Delivery
+
+Delivered as [PR #35](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/35),
+targeting main, intentionally OPEN for review.
+
+- Bootstrap: `50d054d` — isolate the pinned dependency checkout from central NuGet inheritance.
+- Implementation: `50bdb43033febcad258a1322393f9034247fca3c` — bounded local resources,
+  both adapters, examples, regressions, policy and dependency/release documentation.
+- Hosted implementation CI: [39037796081](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39037796081)
+  is terminal SUCCESS on that exact implementation SHA, with shared, Windows and Android
+  jobs all successful. [PR run 39037798953](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39037798953)
+  and any documentation-only follow-up checks are linked by the PR; their status is not
+  inferred from this earlier run. The final chat/PR check summary records the final head.
+
+This report's delivery update changes documentation only. Local execution evidence above
+qualifies the implementation, while hosted checks remain separately identifiable by SHA.
+No issues were closed, no PR merged and no NuGet/preview/stable/GitHub release published.

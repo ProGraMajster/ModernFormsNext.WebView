@@ -9,6 +9,8 @@ network policy parity or physical-device qualification.
 | --- | --- | --- | --- |
 | URI navigation | HTTP/HTTPS, about:blank | Implemented | Implemented; app network policy applies |
 | Raw HTML | Null Source, no base option | NavigateToString; native size limit | LoadDataWithBaseURL(null); native history differs |
+| Local public resources | Immutable bytes, isolated HTTPS origin, fixed CSP | Request interception with Document filter; capability false on unsupported runtime | API21+ ShouldInterceptRequest; worker-thread immutable snapshot, minSdk23 |
+| Privileged messaging/RPC | Not implemented; fail closed | No authorized handler dispatch | No authorized handler dispatch; AddJavascriptInterface cannot authenticate origin |
 | Initialization | Detached/Initializing/Ready/Failed/Disposed | Async environment/controller | Fresh View on UI thread |
 | Events | Main-frame Starting/Completed/Failed | Native NavigationId tracking | SDK callbacks; no native navigation ID |
 | Cancel navigation | Cancel Starting; restores committed request | Native Cancel | Main-frame preflight/override; incomplete POST interception |
@@ -39,3 +41,6 @@ does not capture native browser pixels. Nonrectangular/transformed clipping is n
 Future work requires separate design: origin-restricted Android messaging, complete request
 interception, cookies/headers, permission UX, download/new-window policy, richer settings,
 profile isolation and wider device/engine qualification. These are not silently enabled.
+
+Local resource limits, HTTP/MIME/CSP and lifecycle semantics are in [local content](local-content.md).
+Platform qualification and dependency gates are recorded in [phase2-progress](phase2-progress.md).

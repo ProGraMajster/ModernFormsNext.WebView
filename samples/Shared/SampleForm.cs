@@ -17,6 +17,7 @@ internal sealed class SampleForm : Form
         AddButton(toolbar, "Back", () => Browser.GoBack()); AddButton(toolbar, "Forward", () => Browser.GoForward());
         AddButton(toolbar, "Reload", () => Browser.Reload()); AddButton(toolbar, "Stop", Browser.Stop);
         AddButton(toolbar, "Offline HTML", () => Browser.NavigateToHtml(TestContent.Html));
+        AddButton(toolbar, "Local resources", () => Browser.NavigateToLocalContent(LocalContentSample.Create()));
         AddAsyncButton(toolbar, "JavaScript", async () => status.Text = await Browser.ExecuteScriptAsync("testResult()"));
         AddAsyncButton(toolbar, "Message to page", () => Browser.PostMessageAsync("app message"));
         AddAsyncButton(toolbar, "MFN dialog", async () =>

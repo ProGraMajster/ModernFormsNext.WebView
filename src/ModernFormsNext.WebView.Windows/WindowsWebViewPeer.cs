@@ -8,7 +8,7 @@ using ModernFormsNext.WindowKit.Threading;
 namespace ModernFormsNext.WebView.Windows;
 
 internal sealed class WindowsWebViewPeer(WindowsWebViewProvider provider, WindowsNativeViewSite site,
-    IWebViewPeerClient client) : IWebViewPeer
+    IWebViewPeerClient client) : IWebViewPeer, IWebViewLocalContentPeer
 {
     private CoreWebView2Controller? controller;
     private CoreWebView2? core;
@@ -21,6 +21,8 @@ internal sealed class WindowsWebViewPeer(WindowsWebViewProvider provider, Window
     private ulong? activeNativeId;
     private readonly Dictionary<ulong, long> navigations = [];
     private string? bridgeScriptId;
+    private WebViewLocalContent? localContent;
+    public bool SupportsLocalContent { get; private set; }
     private bool Current => !disposed && site.IsCurrent && client.IsCurrent;
 
     private const string BridgeScript =
@@ -61,6 +63,19 @@ internal sealed class WindowsWebViewPeer(WindowsWebViewProvider provider, Window
                 controller.Bounds = new Rectangle(0, 0, size.Width, size.Height);
                 controller.IsVisible = true;
                 Subscribe(); ApplySettings(settings);
+                try
+                {
+                    // Document includes top-level pages, subframes and dedicated workers.
+                    // CSP disables workers; registering shared/service workers on every peer
+                    // would incorrectly dispatch their requests to several controllers.
+                    // The glob is only a performance prefilter (it can also match query
+                    // text); ResourceRequested independently verifies the parsed host.
+                    core.AddWebResourceRequestedFilter("*://*mfn-app.invalid*", CoreWebView2WebResourceContext.All,
+                        CoreWebView2WebResourceRequestSourceKinds.Document);
+                    SupportsLocalContent = true;
+                }
+                catch (NotImplementedException) { SupportsLocalContent = false; }
+                catch (System.Runtime.InteropServices.COMException) { SupportsLocalContent = false; }
                 bridgeScriptId = await core.AddScriptToExecuteOnDocumentCreatedAsync(BridgeScript);
                 if (!Current) return;
                 // Observer exceptions belong to the normal dispatcher policy, outside the
@@ -115,6 +130,7 @@ internal sealed class WindowsWebViewPeer(WindowsWebViewProvider provider, Window
         if (!Current || core is null) return;
         Commands.Submit(request, () =>
         {
+            localContent = request.LocalContent;
             if (request.Html is { } html) core.NavigateToString(settings.IsJavaScriptEnabled
                 ? "<script>" + CreateHelperScript(request.Id) + "</script>" + html : html);
             else core.Navigate(request.Uri?.AbsoluteUri ?? "about:blank");
@@ -225,6 +241,20 @@ internal sealed class WindowsWebViewPeer(WindowsWebViewProvider provider, Window
         client.WebMessageReceived(originalId, message, ParseUri(e.Source));
     }
     private void Permission(object? sender, CoreWebView2PermissionRequestedEventArgs e) => e.State = CoreWebView2PermissionState.Deny;
+    private void ResourceRequested(object? sender, CoreWebView2WebResourceRequestedEventArgs e)
+    {
+        var browserCore = core;
+        if (browserCore is null) return; // A callback queued before Close cannot reopen a retired engine.
+        if (!WebViewLocalContent.IsLocalUri(e.Request.Uri)) return;
+        // Never allow retired, unknown or invalid reserved URLs to fall through to DNS.
+        var response = Current && localContent is { } content
+            ? content.CreateResponse(e.Request.Uri, e.Request.Method) : WebViewLocalContent.ErrorResponse();
+        string charset = response.MimeType.StartsWith("image/", StringComparison.Ordinal) ? "" : "; charset=utf-8";
+        string headers = "Content-Type: " + response.MimeType + charset + "\r\n" +
+            string.Join("\r\n", response.Headers.Select(pair => pair.Key + ": " + pair.Value));
+        e.Response = browserCore.Environment.CreateWebResourceResponse(response.OpenRead(), response.StatusCode,
+            response.StatusCode == 200 ? "OK" : "Local resource unavailable", headers);
+    }
     private void NewWindow(object? sender, CoreWebView2NewWindowRequestedEventArgs e) => e.Handled = true;
     private void Download(object? sender, CoreWebView2DownloadStartingEventArgs e) => e.Cancel = true;
     private void MoveFocus(object? sender, CoreWebView2MoveFocusRequestedEventArgs e)
@@ -239,6 +269,7 @@ internal sealed class WindowsWebViewPeer(WindowsWebViewProvider provider, Window
         core.HistoryChanged += HistoryChanged; core.WebMessageReceived += Message;
         core.PermissionRequested += Permission; core.NewWindowRequested += NewWindow;
         core.DownloadStarting += Download; controller!.MoveFocusRequested += MoveFocus;
+        core.WebResourceRequested += ResourceRequested;
     }
     private void CloseController()
     {
@@ -252,6 +283,7 @@ internal sealed class WindowsWebViewPeer(WindowsWebViewProvider provider, Window
                 previousCore.HistoryChanged -= HistoryChanged; previousCore.WebMessageReceived -= Message;
                 previousCore.PermissionRequested -= Permission; previousCore.NewWindowRequested -= NewWindow;
                 previousCore.DownloadStarting -= Download;
+                previousCore.WebResourceRequested -= ResourceRequested;
                 if (bridgeScriptId is not null) previousCore.RemoveScriptToExecuteOnDocumentCreated(bridgeScriptId);
             }
         }
@@ -259,6 +291,7 @@ internal sealed class WindowsWebViewPeer(WindowsWebViewProvider provider, Window
         {
             if (previous is not null) { previous.MoveFocusRequested -= MoveFocus; previous.Close(); }
             bridgeScriptId = null; navigations.Clear(); commands?.Clear();
+            localContent = null; SupportsLocalContent = false;
         }
     }
     public void Dispose() { if (disposed) return; disposed = true; CloseController(); }
