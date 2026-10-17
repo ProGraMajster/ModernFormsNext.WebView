@@ -15,6 +15,12 @@ JavaScript is disabled by default. Cookies/headers APIs, permission UX, download
 new-window management and DevTools remain future work; permissions and new windows
 are denied and downloads are not saved automatically.
 
+Phase 2 adds [experimental local resources](docs/local-content.md): explicitly public,
+immutable HTML/CSS/JS/images at an isolated HTTPS origin, fixed CSP and native request
+interception on Windows/Android. No directory mapping or HTTP server is exposed.
+This does not enable privileged Hybrid messaging. See [progress and gates](docs/phase2-progress.md)
+and the [trust matrix](docs/hybrid-security.md).
+
 Source bootstrap is pinned to framework commit
 `69c5ea2b20b07d9df801340c8ae9e3e1ca5dfbc3`. No published package is selected as the
 NativeViewHost dependency. See [testing](docs/testing.md) for reproducible build commands.

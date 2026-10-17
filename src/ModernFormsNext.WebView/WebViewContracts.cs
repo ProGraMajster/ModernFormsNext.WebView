@@ -22,7 +22,9 @@ public enum WebViewCapabilities
     /// <summary>Cancellation of reported main-frame Starting callbacks, subject to platform hook limitations.</summary>
     NavigationCancellation = 32,
     /// <summary>A validated user agent override.</summary>
-    UserAgent = 64
+    UserAgent = 64,
+    /// <summary>Immutable public application resources at a controlled HTTPS origin; no privileged messaging.</summary>
+    LocalContent = 128
 }
 
 /// <summary>Describes browser initialization independently of native hosting availability.</summary>
@@ -75,7 +77,12 @@ public sealed class WebViewOperationException : Exception
 /// <param name="Id">Monotonically increasing identity, local to this control.</param>
 /// <param name="Uri">Requested address; null for raw HTML.</param>
 /// <param name="Html">Raw HTML; null for URI requests.</param>
-public sealed record WebViewNavigationRequest(long Id, Uri? Uri, string? Html);
+public sealed record WebViewNavigationRequest(long Id, Uri? Uri, string? Html)
+{
+    /// <summary>Gets the optional immutable collection for this local URI request, retained for replay.</summary>
+    /// <remarks>Only adapters advertising IWebViewLocalContentPeer may receive a non-null value.</remarks>
+    public WebViewLocalContent? LocalContent { get; init; }
+}
 
 /// <summary>Immutable browser settings applied on the UI thread.</summary>
 /// <param name="IsJavaScriptEnabled">Whether explicit scripts and page messaging are allowed.</param>

@@ -1,5 +1,10 @@
 # Final baseline review — 2026-10-10
 
+Historical baseline evidence below remains unchanged. Phase 2 adds an experimental
+local-content API/capability, optional adapter contract and neutral response types;
+their inventory, semantics and new execution results are in [local content](local-content.md)
+and [phase2-progress](phase2-progress.md). PR #9 is now merged, with no release selected.
+
 This review covers the complete first implementation before its single baseline commit.
 It supersedes the qualification summary in [the historical implementation report](baseline-report.md).
 The feature remains **Development / Experimental**, unpublished and subject to maintainer review.

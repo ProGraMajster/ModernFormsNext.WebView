@@ -21,7 +21,8 @@ public sealed class MainActivity : AndroidWindowActivity
                         m => global::Android.Util.Log.Info("MFNWebView", m));
                     await NavigationRuntimeValidation.RunPostAsync(form.Browser, new Uri("https://example.com/"),
                         m => global::Android.Util.Log.Info("MFNWebView", m));
-                    await RuntimeValidation.NavigateAsync(form.Browser, () => form.Browser.NavigateToHtml(TestContent.Html));
+                    // Leave the static local document visible for rotation/recreation checks.
+                    await RuntimeValidation.NavigateAsync(form.Browser, () => form.Browser.NavigateToLocalContent(LocalContentSample.Create()));
                     global::Android.Util.Log.Info("MFNWebView", "RUNTIME PASS");
                 }
                 catch (Exception error) { global::Android.Util.Log.Error("MFNWebView", "RUNTIME FAIL: " + error); }

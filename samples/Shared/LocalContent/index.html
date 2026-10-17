@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Offline application resources</title>
+<link rel="stylesheet" href="app.css"><script src="app.js" defer></script></head>
+<body><h1 id="title">Offline application resources</h1>
+<p>HTML, CSS, JavaScript and an image are served from an explicit public collection.</p>
+<img id="image" src="pixel.png" alt="Local image" width="32" height="32">
+<p id="result">Loading external script…</p>
+<button id="send">Send an untrusted string</button>
+<!-- Deliberately hostile fixtures: response CSP must block both. -->
+<script>window.inlineExecuted = true;</script>
+<iframe src="frame.html" title="CSP denial fixture"></iframe>
+</body></html>

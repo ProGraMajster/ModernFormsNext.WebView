@@ -28,12 +28,14 @@ internal static class Program
                 await ValidateInitializationFailureAsync(form);
                 using var second = new ModernFormsNext.Form { UseSystemDecorations = true };
                 second.Show();
+                await RuntimeValidation.NavigateAsync(form.Browser, () => form.Browser.NavigateToLocalContent(LocalContentSample.Create()));
                 long before = form.Browser.GetDiagnostics().PeerGeneration;
                 await RuntimeValidation.NavigateAsync(form.Browser, () => second.Controls.Add(form.Browser));
                 RuntimeValidation.Require(form.Browser.GetDiagnostics().PeerGeneration > before, "cross-window peer recreated");
                 RuntimeValidation.Require(!form.Browser.CanGoBack && !form.Browser.CanGoForward, "recreation resets browser history");
                 await RuntimeValidation.NavigateAsync(form.Browser, () =>
                 { form.Controls.Add(form.Browser); form.Controls.SetChildIndex(form.Browser, 0); });
+                RuntimeValidation.Require(await form.Browser.ExecuteScriptAsync("window.localAnswer") == "42", "local resources replay after reparent");
                 Console.WriteLine("PASS cross-window reparent + replay + history reset");
                 Console.WriteLine("RUNTIME PASS");
             }

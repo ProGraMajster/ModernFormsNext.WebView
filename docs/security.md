@@ -12,7 +12,10 @@ file:, data:, javascript:, other about addresses and custom schemes are rejected
 navigation targets. Raw HTML is a separate operation with no application-supplied base URI.
 Only a raw HTML request's initial engine-private data/about:blank marker is normalized to logical
 null Source; a reported redirect still validates its actual destination against the scheme policy.
-No file access, virtual-host mapping or filesystem bridge API is exposed.
+No file access, directory mapping or filesystem bridge API is exposed. The separate
+NavigateToLocalContent operation serves only explicitly public immutable bytes at a
+reserved HTTPS origin; [local content](local-content.md) specifies path/MIME/CSP policy.
+The [trust matrix](hybrid-security.md) keeps all privileged dispatch unavailable.
 
 NavigationStarting cancellation is a useful main-frame filter, not a sandbox. It does not
 intercept all subresources, scripts, fetches, frames, POSTs or every native redirect path.

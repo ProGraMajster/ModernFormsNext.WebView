@@ -7,8 +7,9 @@ using Browser = global::Android.Webkit.WebView;
 
 namespace ModernFormsNext.WebView.Android;
 
-internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPeerClient client) : IWebViewPeer
+internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPeerClient client) : IWebViewPeer, IWebViewLocalContentPeer
 {
+    public bool SupportsLocalContent => Current && view is not null;
     private readonly IWebViewPeerClient callbacks = client;
     private Browser? view;
     private AndroidViewPeer? attachment;
@@ -109,7 +110,7 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
         if (!Current || view is null) return;
         long previousId = id;
         id = request.Id;
-        if (!callbacks.NavigationStarting(id, request.Uri, false) || !Current) return;
+        if (!callbacks.NavigationStarting(id, request.Uri, false) || !Current || id != request.Id) return;
         if (loading && previousId != request.Id)
         {
             // Android supplies no native navigation identity. An interrupted document gets
@@ -122,6 +123,7 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
             if (!Current || id != request.Id) return;
         }
         id = request.Id; expectedUri = request.Uri; rawHtml = request.Html is not null; stopped = false;
+        navigationClient?.SetContent(request.LocalContent);
         loading = true;
         if (request.Html is { } html)
             view.LoadDataWithBaseURL(null, settings.IsJavaScriptEnabled ? "<script>" + CreateHelperScript(id) + "</script>" + html : html, "text/html", "UTF-8", null);
@@ -236,6 +238,7 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
     private void Cleanup()
     {
         ++browserGeneration; // Revoke native callbacks before detaching/destroying the browser.
+        navigationClient?.Retire();
         var previous = view; view = null;
         try
         {
@@ -266,6 +269,23 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
 
     private sealed class NavigationClient(AndroidWebViewPeer owner, long generation) : WebViewClient
     {
+        private WebViewLocalContent? content;
+        private int retired;
+        internal void SetContent(WebViewLocalContent? value) => Volatile.Write(ref content, value);
+        internal void Retire() { Interlocked.Exchange(ref retired, 1); Volatile.Write(ref content, null); }
+        public override WebResourceResponse? ShouldInterceptRequest(Browser? view, IWebResourceRequest? request)
+        {
+            string? address = request?.Url?.ToString();
+            if (address is null || !WebViewLocalContent.IsLocalUri(address)) return null;
+            // Chromium invokes this on a worker thread. Do not touch owner/site/View or
+            // invoke application callbacks here. Old clients can only return empty denial.
+            var snapshot = Volatile.Read(ref content);
+            var response = Volatile.Read(ref retired) == 0 && snapshot is not null
+                ? snapshot.CreateResponse(address, request!.Method ?? "") : WebViewLocalContent.ErrorResponse();
+            return new WebResourceResponse(response.MimeType, "UTF-8", response.StatusCode,
+                response.StatusCode == 200 ? "OK" : "Local resource unavailable",
+                response.Headers.ToDictionary(pair => pair.Key, pair => pair.Value), response.OpenRead());
+        }
         private bool Current => owner.Current && generation == owner.browserGeneration;
         public override bool ShouldOverrideUrlLoading(Browser? view, IWebResourceRequest? request)
             => !Current || request?.IsForMainFrame == true && owner.Override(ParseUri(request.Url?.ToString()));
