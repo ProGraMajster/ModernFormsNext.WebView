@@ -18,6 +18,7 @@ internal static class Program
             try
             {
                 await RuntimeValidation.RunAsync(form, Console.WriteLine);
+                await WindowsMessagingValidation.RunAsync(form.Browser);
                 await ValidateInitializationRacesAsync(form);
                 // Keyboard injection requires an interactive foreground desktop. Keep it
                 // explicit so ordinary native validation can run from background tools.

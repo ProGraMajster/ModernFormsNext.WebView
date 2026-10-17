@@ -1,5 +1,4 @@
 using System.Drawing;
-using System.Text.Json;
 using Microsoft.Web.WebView2.Core;
 using ModernFormsNext.WindowKit;
 using ModernFormsNext.WindowKit.Backend.Windows;
@@ -22,15 +21,16 @@ internal sealed class WindowsWebViewPeer(WindowsWebViewProvider provider, Window
     private readonly Dictionary<ulong, long> navigations = [];
     private string? bridgeScriptId;
     private WebViewLocalContent? localContent;
+    private readonly WindowsMessageGuard messages = new();
     public bool SupportsLocalContent { get; private set; }
     private bool Current => !disposed && site.IsCurrent && client.IsCurrent;
 
     private const string BridgeScript =
         "chrome.webview.addEventListener('message',function(e){window.dispatchEvent(new MessageEvent('message',{data:e.data}));});";
-    private static string CreateHelperScript(long requestId) =>
-        "window.modernFormsWebView={postMessage:(function(id){return function(v){" +
-        "chrome.webview.postMessage(JSON.stringify([id,String(v)]));};})(" +
-        requestId.ToString(System.Globalization.CultureInfo.InvariantCulture) + ")};";
+    private static string CreateHelperScript(long requestId, string token) =>
+        "window.modernFormsWebView={postMessage:(function(id,token){return function(v){" +
+        "chrome.webview.postMessage(JSON.stringify([id,token,String(v)]));};})(" +
+        requestId.ToString(System.Globalization.CultureInfo.InvariantCulture) + ",'" + token + "')};";
 
     public void Initialize(WebViewSettings value)
     {
@@ -118,6 +118,7 @@ internal sealed class WindowsWebViewPeer(WindowsWebViewProvider provider, Window
     }
     public void ApplySettings(WebViewSettings value)
     {
+        if (!value.IsJavaScriptEnabled) messages.Revoke();
         settings = value; if (!Current || core is null) return;
         core.Settings.IsScriptEnabled = value.IsJavaScriptEnabled;
         core.Settings.IsWebMessageEnabled = value.IsJavaScriptEnabled;
@@ -130,18 +131,20 @@ internal sealed class WindowsWebViewPeer(WindowsWebViewProvider provider, Window
         if (!Current || core is null) return;
         Commands.Submit(request, () =>
         {
+            string token = messages.Prepare(request.Id);
             localContent = request.LocalContent;
             if (request.Html is { } html) core.NavigateToString(settings.IsJavaScriptEnabled
-                ? "<script>" + CreateHelperScript(request.Id) + "</script>" + html : html);
+                ? "<script>" + CreateHelperScript(request.Id, token) + "</script>" + html : html);
             else core.Navigate(request.Uri?.AbsoluteUri ?? "about:blank");
         });
     }
-    public void GoBack(long id) { if (Current && core?.CanGoBack == true) Commands.Submit(new(id, null, null), core.GoBack); }
-    public void GoForward(long id) { if (Current && core?.CanGoForward == true) Commands.Submit(new(id, null, null), core.GoForward); }
-    public void Reload(long id) { if (Current && core is not null) Commands.Submit(new(id, null, null), core.Reload); }
+    public void GoBack(long id) { if (Current && core?.CanGoBack == true) Commands.Submit(new(id, null, null), () => { messages.Prepare(id); core.GoBack(); }); }
+    public void GoForward(long id) { if (Current && core?.CanGoForward == true) Commands.Submit(new(id, null, null), () => { messages.Prepare(id); core.GoForward(); }); }
+    public void Reload(long id) { if (Current && core is not null) Commands.Submit(new(id, null, null), () => { messages.Prepare(id); core.Reload(); }); }
     private NavigationCommandQueue Commands => commands ??= new(() => Current, action => Dispatcher.UIThread.Post(action));
     public void Stop()
     {
+        messages.Revoke();
         activeNativeId = null;
         // An unacknowledged command is canceled by its original-ID Starting callback.
         // Calling Stop before it starts can suppress that callback and strand the queue.
@@ -173,12 +176,14 @@ internal sealed class WindowsWebViewPeer(WindowsWebViewProvider provider, Window
             id = submitted?.Id ?? client.BeginNativeNavigation();
             navigations[e.NavigationId] = id;
             logicalId = id; activeNativeId = e.NavigationId;
+            messages.Prepare(id);
         }
         Uri? uri = submitted?.Html is not null ? null : ParseUri(e.Uri);
         try { e.Cancel = !client.NavigationStarting(id, uri, e.IsRedirected); }
         catch { e.Cancel = true; throw; }
         finally
         {
+            if (e.Cancel) messages.Revoke(id);
             if (!e.IsRedirected && submitted is not null)
             {
                 // Native/user Starting may enqueue another command in an observer.
@@ -192,20 +197,30 @@ internal sealed class WindowsWebViewPeer(WindowsWebViewProvider provider, Window
         if (!navigations.Remove(e.NavigationId, out long id) || !Current) return;
         if (activeNativeId != e.NavigationId) return;
         if (e.IsSuccess) _ = CompleteSuccessAsync(e.NavigationId, id, e.HttpStatusCode == 0 ? null : e.HttpStatusCode);
-        else client.NavigationFailed(id, ParseUri(core?.Source), WindowsWebViewPolicy.MapError(e.WebErrorStatus));
+        else { messages.Revoke(id); client.NavigationFailed(id, ParseUri(core?.Source), WindowsWebViewPolicy.MapError(e.WebErrorStatus)); }
     }
     private async Task CompleteSuccessAsync(ulong nativeId, long id, int? status)
     {
-        // The helper closes over the document's original request identity. A message queued
-        // by a previous page cannot acquire a newer ID merely because navigation has begun.
+        // The helper closes over the original request and opaque per-document token.
+        // Substituting the public request ID in an old packet cannot make it current.
         // Remote documents get the helper before the public completion notification.
         try
         {
+            if (!Current || activeNativeId != nativeId) return;
             if (settings.IsJavaScriptEnabled && core is not null)
-                await core.ExecuteScriptAsync(CreateHelperScript(id));
+            {
+                // A stale async completion must not rotate or restore the guard.
+                // An already submitted script can only carry its original token.
+                // JS can be disabled/re-enabled while this document is loading. Its
+                // revoked helper stays unavailable until reload, but navigation must
+                // still settle rather than remaining permanently IsLoading.
+                if (messages.TryGetToken(id, out string token))
+                    await core.ExecuteScriptAsync(CreateHelperScript(id, token));
+            }
         }
         catch
         {
+            messages.Revoke(id);
             Dispatcher.UIThread.Post(() =>
             {
                 if (Current && activeNativeId == nativeId) client.NavigationFailed(id, ParseUri(core?.Source), WebViewErrorCategory.Engine);
@@ -224,21 +239,17 @@ internal sealed class WindowsWebViewPeer(WindowsWebViewProvider provider, Window
     private void Message(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
     {
         if (!Current || !settings.IsJavaScriptEnabled) return;
-        long originalId;
-        string message;
+        string wire;
         try
         {
-            using var packet = JsonDocument.Parse(e.TryGetWebMessageAsString());
-            if (packet.RootElement.ValueKind != JsonValueKind.Array || packet.RootElement.GetArrayLength() != 2 ||
-                packet.RootElement[0].ValueKind != JsonValueKind.Number ||
-                !packet.RootElement[0].TryGetInt64(out originalId) || packet.RootElement[1].ValueKind != JsonValueKind.String) return;
-            message = packet.RootElement[1].GetString()!;
+            wire = e.TryGetWebMessageAsString();
         }
         catch (ArgumentException) { return; }
-        catch (JsonException) { return; }
-        // Reject malformed transport data only. Observer exceptions must follow the
-        // framework's event policy, even if they themselves are JSON/argument exceptions.
-        client.WebMessageReceived(originalId, message, ParseUri(e.Source));
+        var source = ParseUri(e.Source);
+        if (!messages.TryRead(wire, source, localContent?.Origin, out long originalId, out string message)) return;
+        // This guard never authenticates the script caller. Observer exceptions follow
+        // the framework's normal policy, including JSON/argument errors.
+        client.WebMessageReceived(originalId, message, source);
     }
     private void Permission(object? sender, CoreWebView2PermissionRequestedEventArgs e) => e.State = CoreWebView2PermissionState.Deny;
     private void ResourceRequested(object? sender, CoreWebView2WebResourceRequestedEventArgs e)
@@ -273,6 +284,7 @@ internal sealed class WindowsWebViewPeer(WindowsWebViewProvider provider, Window
     }
     private void CloseController()
     {
+        messages.Revoke();
         var previous = controller; controller = null;
         var previousCore = core; core = null;
         try

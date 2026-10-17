@@ -41,6 +41,12 @@ choose an explicit app-specific profile to control isolation. It never uses the 
 directory. Production profiles are persistent application data and are not deleted on Dispose.
 Native validation uses a unique temporary profile and bounded cleanup after closing controllers.
 
+The [#15 hardening and decision](issue15-windows-message-hardening.md) binds private incoming
+packets to a native-prepared token and checks controlled local-resource Source by parsed origin.
+Stop, canceled/failed navigation, JS disable and controller cleanup revoke correlation. A stale
+completion cannot restore it. Same-origin child-to-parent helper calls still arrive as untrusted
+baseline data; AuthenticatedMessaging remains unavailable and no C# handler is exported.
+
 The official package unconditionally adds WPF/WinForms wrapper references. Build targets remove
 those unused wrappers before assembly resolution, preserving only Core plus the official native
 loader. This framework has no WPF/WinForms UI integration.

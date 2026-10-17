@@ -15,6 +15,8 @@ consumes it without defining another hosting or platform service system.
 - [Versioned unprivileged RPC (#12)](issue12-rpc.md)
 - [PR #36–#38 final audit and sequential merges](pr36-38-final-audit.md)
 - [AndroidX origin/frame prototype and ADR (#16)](issue16-android-origin-research.md)
+- [Windows message hardening and privileged NO-GO (#15)](issue15-windows-message-hardening.md)
+- [Current Phase 2 follow-up report and next issue order](phase2-followup-report.md)
 - [PR #35 final audit and merge](pr35-final-audit.md)
 - [Phase 2 progress, dependency and release gates](phase2-progress.md)
 - [Platform capabilities and limitations](capabilities.md)

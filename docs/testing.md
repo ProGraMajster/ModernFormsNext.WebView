@@ -66,6 +66,10 @@ isolated initialization failure, and bounded test-profile cleanup after the mess
 It also exercises JSON result shapes, malformed bridge packets, Unicode/quote/backslash message
 escaping, native POST identity and reentrant navigation. Windows adds deferred controller focus
 and ten immediate retirements while asynchronous controller initialization is outstanding.
+Windows also captures an actual old private message, reloads the same origin, and verifies
+that replacing only its public request ID cannot deliver it. A positively received current
+message fences the negative assertions; guessed/legacy packets and post-revocation recovery
+are covered. [#15](issue15-windows-message-hardening.md) documents the authentication limit.
 Failure returns exit code 1. The failure fixture temporarily sets the SDK-supported process-local
 WEBVIEW2_BROWSER_EXECUTABLE_FOLDER to a nonexistent fixed-version directory, then restores its
 previous value in finally. It does not alter the installed runtime or use an invalid profile

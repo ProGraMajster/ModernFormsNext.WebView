@@ -1,5 +1,22 @@
 # Phase 2 progress — 2026-10-17
 
+## Current follow-up delivery
+
+[The current detailed report](phase2-followup-report.md) supersedes historical state below:
+#36/#37/#38 merged normally into main `f4017e7`; issues #33/#11/#12 completed. #16 research
+is delivered in open #39, final head `96becb8a4692b9b9de0086c377b05521f6653d7c`, with all
+three hosted jobs SUCCESS in [CI 39050287675](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39050287675).
+#15 adds Windows packet/document hardening in a separate dependent PR; the original-caller
+security requirement remains PARTIAL/open. Both platform privileged decisions are NO-GO
+for the tested same-origin parent-relay threat. #13/#17/#18 remain gated, while #19 can
+extend unprivileged RPC independently and #22 can perform its bounded feasibility spike.
+No handler/Hybrid/Blazor implementation, release or framework-pin change is implied.
+
+#15 delivery: open [PR #40](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/40),
+implementation `4b748f2a29cac7090c870adbd7b6b7295d5a203c`; final Debug/Release 188/188
+each, zero skips/warnings/errors, Windows/Android native RUNTIME PASS both configurations.
+The exact final delivery head and terminal hosted CI links are recorded on that PR.
+
 ## Subsequent audit and AndroidX research
 
 #36 → #37 → #38 were audited and normally merged; local/remote main became
