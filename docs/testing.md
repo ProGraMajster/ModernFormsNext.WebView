@@ -105,6 +105,11 @@ records which checks were actually run and which still require qualification.
 
 ## CI
 
+The isolated [AndroidX prototype](../research/AndroidOriginProbe/README.md) is built explicitly
+outside the product solution. Its validator requires an adb path and explicit device serial;
+run Debug/Release with `-Recreate`. Its terminal marker means the experiment executed;
+the privileged result is NO-GO. Hosted compilation is not native execution evidence.
+
 The workflow has separate shared, Windows and Android jobs. Each checks out the framework at
 the exact pinned commit and passes ModernFormsNextSourceRoot. Shared runs the deterministic
 suite on Ubuntu; Windows builds the sample and tests its adapter queue; Android installs its

@@ -80,3 +80,13 @@ without exposing privileged handlers. #12 remains a separate dependent protocol 
 #13/#15/#17 still require independently verified authenticated platform messaging.
 [#12 RPC](docs/issue12-rpc.md) builds on #11 with explicit unprivileged app-to-JavaScript
 calls only; bounded protocol validation is independent of the pending authentication gate.
+
+## Subsequent verified state
+
+PR #36/#37/#38 are merged normally; issues #33/#11/#12 are complete within their scoped
+criteria. [Merge audit](docs/pr36-38-final-audit.md) records history, CI and fresh qualification.
+[#16 native AndroidX research](docs/issue16-android-origin-research.md) demonstrates exact
+origin/direct-frame metadata and a same-origin parent-object relay counterexample. Its
+privileged decision is NO-GO for that main-world policy. #17 requires a new verified security
+contract; #13 cannot start from an origin allowlist and isMainFrame alone. The research
+dependency stays outside product projects. API23 runtime remains an independent gate.

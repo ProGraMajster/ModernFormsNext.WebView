@@ -45,5 +45,9 @@ Future work requires separate design: origin-restricted Android messaging, compl
 interception, cookies/headers, permission UX, download/new-window policy, richer settings,
 profile isolation and wider device/engine qualification. These are not silently enabled.
 
+[#16 research](issue16-android-origin-research.md) adds a separate AndroidX SDK APK. It
+verifies origin/direct-frame metadata and a parent-object relay counterexample. Privileged
+authentication remains NO-GO; no product capability or AndroidX reference is added.
+
 Local resource limits, HTTP/MIME/CSP and lifecycle semantics are in [local content](local-content.md).
 Platform qualification and dependency gates are recorded in [phase2-progress](phase2-progress.md).

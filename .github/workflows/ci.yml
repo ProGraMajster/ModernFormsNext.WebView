@@ -79,3 +79,5 @@ jobs:
         run: dotnet test tests/ModernFormsNext.WebView.Android.Tests -c Release -m:1 -p:UseSharedCompilation=false -p:GeneratePackageOnBuild=false -p:ModernFormsNextSourceRoot=${{ github.workspace }}/framework -p:EnableWindowsTargeting=true
       - name: Build Android sample APK
         run: dotnet build samples/ModernFormsNext.WebView.Sample.Android -c Release -t:SignAndroidPackage -m:1 -p:UseSharedCompilation=false -p:GeneratePackageOnBuild=false -p:ModernFormsNextSourceRoot=${{ github.workspace }}/framework -p:EnableWindowsTargeting=true
+      - name: Build isolated AndroidX origin research APK
+        run: dotnet build research/AndroidOriginProbe -c Release -t:SignAndroidPackage -m:1 -p:UseSharedCompilation=false -p:GeneratePackageOnBuild=false -p:ModernFormsNextSourceRoot=${{ github.workspace }}/framework -p:EnableWindowsTargeting=true
