@@ -114,6 +114,15 @@ delivery. They remain original during reentrant navigation and are never authent
 IsOriginAuthenticated is always false, including for controlled local content. Neither
 adapter advertises AuthenticatedMessaging. See the [native security verification](issue33-security-validation.md).
 
+## Unprivileged RPC
+
+The optional `WebViewRpcClient` borrows `IWebViewTransport` and invokes explicit JavaScript
+methods with required JsonTypeInfo metadata, a bounded version-one envelope, per-call IDs,
+timeouts, advisory cancellation and canonical document revocation. Install
+`WebViewRpcProtocol.JavaScript` explicitly per document. Inbound requests are ignored;
+there is no C# handler registry or authentication upgrade. Fixed error categories are in
+`WebViewRpcException`. See [RPC wire/API/examples](issue12-rpc.md).
+
 ## Designer
 
 The inherited Skia placeholder says WebView and starts no browser/network operation.

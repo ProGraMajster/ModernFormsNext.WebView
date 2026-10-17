@@ -69,3 +69,8 @@ Packaging remains disabled. ModernFormsNextSourceRoot is an explicit development
 input with no machine path in project files. It is required at this stage because no package
 version is selected as containing #60. A future packaging change can replace the conditional
 source references with PackageReferences under an explicit supported framework version.
+
+The optional [RPC client](issue12-rpc.md) consumes IWebViewTransport and its canonical
+document token without another navigation lifecycle. A bounded pending map correlates
+untrusted responses to explicit app-to-JavaScript requests. Endpoint installation is
+explicit; neither RPC nor transport exposes C# handlers or authenticates caller origin.

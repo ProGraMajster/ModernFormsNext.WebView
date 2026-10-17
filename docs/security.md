@@ -61,6 +61,11 @@ The optional [reusable transport](issue11-transport.md) preserves these rules. I
 snapshot and cancellation token correlate lifetimes only; neither authenticates a caller.
 It borrows the control, exposes no C# handlers and installs no JavaScript automatically.
 
+The optional [RPC client](issue12-rpc.md) sends explicit requests to JavaScript methods
+and accepts only bounded correlated responses. All results remain untrusted. It ignores
+inbound requests and exports no C# handlers. A matching request/document ID never grants
+permission; Android AddJavascriptInterface still does not authenticate the original frame.
+
 ## Native defaults and persistence
 
 Permissions default to denied (Android includes geolocation and file chooser). No camera,
