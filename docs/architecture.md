@@ -16,6 +16,11 @@ silently treating local resource requests as remote navigation. Native intercept
 immutable bytes and never adds a host, dispatcher, focus/DPI manager or resource server.
 See [local content](local-content.md) and [Hybrid trust boundaries](hybrid-security.md).
 
+The [reusable transport](issue11-transport.md) adapts canonical control operations and
+reads the existing request/peer/token snapshot. Its own disposal scope cancels only its
+calls and subscriptions. It owns no browser, native site, geometry, Activity or document
+counter; stale forwarding uses original callback metadata from #33.
+
 ```text
 WebView : NativeViewHost
   -> feature factory -> registered IWebViewPeerFactoryProvider

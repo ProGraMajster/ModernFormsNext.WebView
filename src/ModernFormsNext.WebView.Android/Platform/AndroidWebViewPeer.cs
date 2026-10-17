@@ -203,6 +203,10 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
             long originalId = id;
             var originalView = view;
             expectedUri = uri;
+            // POST has already started in this native View. Mark it active before invoking
+            // observers: a reentrant replacement must retire this View, otherwise its late
+            // OnPageFinished can complete the newer raw HTML under the replacement's ID.
+            loading = true;
             if (!callbacks.NavigationStarting(originalId, uri, false))
             {
                 // An observer may have submitted a new navigation or replaced this View.

@@ -73,3 +73,8 @@ is a maintainer decision, not automatic issue closure here.
 Ordinary WebView may reach stable once its own gates pass. Optional local-resource,
 Hybrid, RPC, Android authenticated transport and Blazor gates do not delay that decision.
 No version, NuGet publication, release, merge or issue closure is authorized by this DAG.
+
+Follow-up #33 provides native hostile-frame/redirect/lifetime evidence in PR #36.
+The [#11 transport](docs/issue11-transport.md) reuses canonical document cancellation
+without exposing privileged handlers. #12 remains a separate dependent protocol change;
+#13/#15/#17 still require independently verified authenticated platform messaging.

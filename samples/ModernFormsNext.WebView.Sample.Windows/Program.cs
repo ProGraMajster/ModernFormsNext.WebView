@@ -45,6 +45,9 @@ internal static class Program
             finally { form.Close(); }
         };
         ModernFormsNext.Application.Run(form);
+        // Close ends the window loop; dispose the owned control tree before attempting
+        // profile removal. The using declaration otherwise runs only after cleanup.
+        form.Dispose();
         if (profile is not null)
         {
             string resolvedProfile = System.IO.Path.GetFullPath(profile);
