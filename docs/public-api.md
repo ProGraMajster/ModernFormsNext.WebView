@@ -103,6 +103,11 @@ Advanced native settings objects are never exposed in shared API.
 
 ## Designer
 
+Received baseline messages include RequestId/PeerGeneration captured before observer
+delivery. They remain original during reentrant navigation and are never authentication.
+IsOriginAuthenticated is always false, including for controlled local content. Neither
+adapter advertises AuthenticatedMessaging. See the [native security verification](issue33-security-validation.md).
+
 The inherited Skia placeholder says WebView and starts no browser/network operation.
 Source is hidden because the current Designer deliberately does not edit Uri or execute converters.
 SourceAddress serializes that logical URI through its supported string path; JS and UserAgent use
