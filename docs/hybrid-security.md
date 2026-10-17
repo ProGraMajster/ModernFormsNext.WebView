@@ -16,7 +16,7 @@ The application must treat their strings and informational Source as attacker-co
 | Forged request ID or claimed Source | IDs are spoofable lifetime correlation only | IDs are spoofable lifetime correlation only | Never authenticate from either value |
 | Old document callback after navigation/Stop | Shared request/lease guard | Shared guard plus browser-client generation | Drop obsolete callback; a current ID still confers no privileges |
 | Retired peer / Activity replacement / dispose | IsCurrent + unsubscribe/controller close | Fresh View/client, revoke generation/snapshot before cleanup | Drop; no pending authorization carried across documents |
-| Out-of-order asynchronous reply | No RPC correlation contract exists | No RPC correlation contract exists | Unavailable pending #11/#12 |
+| Out-of-order asynchronous reply | Bounded #12 RPC correlation over untrusted strings | Bounded #12 RPC correlation over untrusted strings | Data only; no authorization or C# dispatch |
 
 Local CSP, exact origin/path matching, MIME and no-CORS responses limit content delivery.
 They are not evidence that a native string callback came from an authorized frame. A
@@ -41,7 +41,7 @@ dispatch still need a privileged-transport protocol; this increment does not upg
 the existing callback/Source into authentication.
 
 Android's [AddJavascriptInterface warning](https://developer.android.com/reference/android/webkit/WebView#addJavascriptInterface(java.lang.Object,%20java.lang.String))
-explains frame exposure and lack of reliable caller origin. The current dependency set
+explains frame exposure and lack of reliable caller origin. The product dependency set
 contains no AndroidX WebKit binding. API23 platform WebMessagePort alone does not establish
 the required incoming frame identity. AndroidX
 [WebMessageListener](https://developer.android.com/reference/androidx/webkit/WebViewCompat.WebMessageListener)
@@ -49,7 +49,11 @@ provides native sourceOrigin/isMainFrame, but actual availability depends on the
 WebView provider's WEB_MESSAGE_LISTENER feature, not only Android API level. #16 must
 prototype exact-origin rules, reject opaque origins/subframes, check supported/unsupported
 providers and stale reply proxies, and justify a pinned binding dependency before #17.
-No dependency was added and no origin-authentication prototype is claimed here.
+The subsequent [#16 research prototype](issue16-android-origin-research.md) uses a separate
+SDK APK and a pinned research-only dependency. It verifies direct-frame metadata and a
+same-origin parent-object relay counterexample: privileged original-caller policy NO-GO.
+The [#15 Windows hardening](issue15-windows-message-hardening.md) rejects stale packet
+ID substitution without upgrading this authentication policy. #15/#17 remain open gates.
 
 Regression evidence additionally exercises same-origin parent-helper invocation, direct
 opaque iframe bridge calls, stale packets after native document replacement, Windows

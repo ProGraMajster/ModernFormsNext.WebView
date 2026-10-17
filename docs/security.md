@@ -36,6 +36,12 @@ exception is configured.
 The supported page entry point is window.modernFormsWebView.postMessage(string). Native transport
 envelopes carry the document's original request identity so delayed callbacks can be rejected.
 That number is a lifetime guard, not authentication: hostile page code can inspect/spoof it.
+Windows additionally correlates its private packet using a native per-document token and
+checks native Source against the controlled local collection's HTTPS origin. This rejects
+old-packet ID substitution; a current same-origin frame can still invoke the parent's helper.
+Neither the token nor that origin check authenticates the original script caller. See the
+[#15 decision and native tests](issue15-windows-message-hardening.md). Applications use the
+documented helper, not private platform packet formats.
 Malformed transport envelopes and invalid token/payload types are discarded. Incoming strings
 have no trusted schema or privileges. Validate length, format and application
 authorization before acting. No arbitrary native objects, reflection, filesystem, dispatcher,

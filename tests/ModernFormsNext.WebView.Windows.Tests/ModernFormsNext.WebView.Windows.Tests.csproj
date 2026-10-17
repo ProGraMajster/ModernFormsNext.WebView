@@ -12,5 +12,6 @@
     <!-- Compile the exact internal queue source for deterministic tests; no friend access. -->
     <Compile Include="../../src/ModernFormsNext.WebView.Windows/NavigationCommandQueue.cs" Link="NavigationCommandQueue.cs" />
     <Compile Include="../../src/ModernFormsNext.WebView.Windows/WindowsWebViewPolicy.cs" Link="WindowsWebViewPolicy.cs" />
+    <Compile Include="../../src/ModernFormsNext.WebView.Windows/WindowsMessageGuard.cs" Link="WindowsMessageGuard.cs" />
   </ItemGroup>
 </Project>

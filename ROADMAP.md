@@ -41,15 +41,18 @@ Baseline #1-#6 -> #7 preview -> #8 stable
 
 #10 architecture -> #32 resources + #33 security matrix -> #14 local content
 #10 -> #11 transport -> #12 versioned RPC
-#16 Android origin/frame research ----------------------+
-#14 + #12 + #33 -> #15 Windows secure transport         |
-#14 + #12 + #33 + #16 verified -> #17 Android transport <-+
+#33 + #11 + #12: MERGED; unprivileged correlation/RPC only
+#16 Android research: prototype delivered, privileged parent-relay policy NO-GO
+#14 + #12 + #33 -> #15 Windows: partial hardening; original-caller gate OPEN
+#16 new verified trust contract + #12/#14/#33 -> #17 Android transport (BLOCKED)
 #12 + verified platform transport -> #13 explicit handlers
 #13 + #14 + supported secure transport -> #18 Hybrid control
-#12 + secure transport -> #19 errors/cancellation
+#12 -> #19 errors/cancellation (unprivileged extension can proceed independently)
+#19 privileged errors -> separately verified platform transport
 #18 + #19 -> #20 offline sample/diagnostics -> #21 qualification/preview
 
-#22 Blazor feasibility GO + lifecycle/assets contract -> #23 host + #24 assets
+#22 independent runnable feasibility spike -> GO/NO-GO ADR
+#22 GO + lifecycle/assets contract -> #23 host + #24 assets
 #23 + #24 -> #25 root components -> #26 interop + #27 lifetime/hot reload
 #22 Android GO -> #28/#30 Android feasibility/adapter
 qualified implemented platforms -> #29/#31 samples/tests/optional package
@@ -76,8 +79,8 @@ No version, NuGet publication, release, merge or issue closure is authorized by 
 
 Follow-up #33 provides native hostile-frame/redirect/lifetime evidence in PR #36.
 The [#11 transport](docs/issue11-transport.md) reuses canonical document cancellation
-without exposing privileged handlers. #12 remains a separate dependent protocol change;
-#13/#15/#17 still require independently verified authenticated platform messaging.
+without exposing privileged handlers. #12 is merged as a separate dependent protocol change;
+#13/#15/#17 still require independently verified privileged platform messaging.
 [#12 RPC](docs/issue12-rpc.md) builds on #11 with explicit unprivileged app-to-JavaScript
 calls only; bounded protocol validation is independent of the pending authentication gate.
 
@@ -90,3 +93,16 @@ origin/direct-frame metadata and a same-origin parent-object relay counterexampl
 privileged decision is NO-GO for that main-world policy. #17 requires a new verified security
 contract; #13 cannot start from an origin allowlist and isMainFrame alone. The research
 dependency stays outside product projects. API23 runtime remains an independent gate.
+
+[#15 Windows hardening](docs/issue15-windows-message-hardening.md) adds private packet
+tokens, exact local native Source checks and revocation tests to the existing adapter.
+It rejects old-packet/current-ID substitution but deliberately leaves authentication
+unavailable: same-origin parent-helper relay still defeats an original-caller policy.
+Issue #15 remains PARTIAL/open; #17/#13/#18 are not approved by these improvements.
+
+Next independent work: #19 audit/extend typed errors and cancellation already provided
+by #12; #22 runnable feasibility/ADR, with no full Blazor host before GO. #20 still needs
+#18/#19; its eventual bidirectional sample must wait for verified handler security.
+[The current follow-up report](docs/phase2-followup-report.md) records the live issue audit,
+stage results, dependency decisions and unexecuted qualification. Baseline #7/#8 follow
+their own package/API/platform gates and are not blocked by optional Hybrid/Blazor work.
