@@ -41,4 +41,3 @@ if ($nativeExit -ne 0 -or -not (Select-String -LiteralPath $log -Pattern 'WORLD 
     throw 'Research native validation failed or did not reach its terminal decision.'
 }
 Write-Output 'PROFILE CLEANUP PASS after process exit; no privileged capability enabled'
-
