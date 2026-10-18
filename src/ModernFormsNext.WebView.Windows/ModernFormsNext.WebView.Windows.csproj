@@ -6,7 +6,10 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../ModernFormsNext.WebView/ModernFormsNext.WebView.csproj" />
-    <PackageReference Include="Microsoft.Web.WebView2" />
+    <!-- Consume Core/loader here. SDK buildTransitive targets also add WPF/WinForms
+         wrappers to unrelated consumers; project references already propagate our
+         resolved Core assembly and loader content without importing those targets. -->
+    <PackageReference Include="Microsoft.Web.WebView2" PrivateAssets="contentfiles;analyzers;build;buildTransitive" />
     <ProjectReference Include="$(ModernFormsNextSourceRoot)/ModernFormsNext.WindowKit.Backend.Windows/ModernFormsNext.WindowKit.Backend.Windows.csproj" Condition="'$(ModernFormsNextSourceRoot)' != ''" />
   </ItemGroup>
 </Project>

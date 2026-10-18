@@ -2,10 +2,13 @@ name: .NET CI
 on: [push, pull_request]
 permissions:
   contents: read
-env:
-  FRAMEWORK_COMMIT: 69c5ea2b20b07d9df801340c8ae9e3e1ca5dfbc3
 jobs:
   shared:
+    name: ${{ matrix.snapshot == 'CurrentMaster' && 'shared' || 'shared-historical-baseline' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        snapshot: [CurrentMaster, HistoricalBaseline]
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -14,10 +17,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: webview
+      - name: Resolve frozen source snapshot
+        id: framework
+        shell: pwsh
+        run: |
+          $entry = & ./scripts/get-framework-snapshot.ps1 -Snapshot '${{ matrix.snapshot }}'
+          "commit=$($entry.commit)" >> $env:GITHUB_OUTPUT
       - uses: actions/checkout@v4
         with:
           repository: ProGraMajster/ModernFormsNext
-          ref: ${{ env.FRAMEWORK_COMMIT }}
+          ref: ${{ steps.framework.outputs.commit }}
           path: framework
       - uses: actions/setup-dotnet@v4
         with:
@@ -27,6 +36,11 @@ jobs:
       - name: Test shared contracts
         run: dotnet test tests/ModernFormsNext.WebView.Tests -c Release --no-restore -m:1 -p:UseSharedCompilation=false -p:GeneratePackageOnBuild=false -p:ModernFormsNextSourceRoot=${{ github.workspace }}/framework -p:EnableWindowsTargeting=true
   windows:
+    name: ${{ matrix.snapshot == 'CurrentMaster' && 'windows' || 'windows-historical-baseline' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        snapshot: [CurrentMaster, HistoricalBaseline]
     runs-on: windows-latest
     defaults:
       run:
@@ -35,10 +49,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: webview
+      - name: Resolve frozen source snapshot
+        id: framework
+        shell: pwsh
+        run: |
+          $entry = & ./scripts/get-framework-snapshot.ps1 -Snapshot '${{ matrix.snapshot }}'
+          "commit=$($entry.commit)" >> $env:GITHUB_OUTPUT
       - uses: actions/checkout@v4
         with:
           repository: ProGraMajster/ModernFormsNext
-          ref: ${{ env.FRAMEWORK_COMMIT }}
+          ref: ${{ steps.framework.outputs.commit }}
           path: framework
       - uses: actions/setup-dotnet@v4
         with:
@@ -55,7 +75,15 @@ jobs:
         run: dotnet run --project research/BlazorFeasibility.Windows -c Release --no-build -- --validate-contracts
       - name: Build isolated execution-world research fixture
         run: dotnet build research/WindowsWorldProbe -c Release -m:1 -p:UseSharedCompilation=false -p:GeneratePackageOnBuild=false -p:ModernFormsNextSourceRoot=${{ github.workspace }}/framework
+      - name: Isolated public source consumer (compile and headless contracts)
+        shell: pwsh
+        run: ./scripts/test-source-consumer.ps1 -Platform Windows -Snapshot '${{ matrix.snapshot }}' -FrameworkRoot '${{ github.workspace }}/framework'
   android:
+    name: ${{ matrix.snapshot == 'CurrentMaster' && 'android' || 'android-historical-baseline' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        snapshot: [CurrentMaster, HistoricalBaseline]
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -64,10 +92,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: webview
+      - name: Resolve frozen source snapshot
+        id: framework
+        shell: pwsh
+        run: |
+          $entry = & ./scripts/get-framework-snapshot.ps1 -Snapshot '${{ matrix.snapshot }}'
+          "commit=$($entry.commit)" >> $env:GITHUB_OUTPUT
       - uses: actions/checkout@v4
         with:
           repository: ProGraMajster/ModernFormsNext
-          ref: ${{ env.FRAMEWORK_COMMIT }}
+          ref: ${{ steps.framework.outputs.commit }}
           path: framework
       - uses: actions/setup-dotnet@v4
         with:
@@ -87,3 +121,6 @@ jobs:
         run: dotnet build samples/ModernFormsNext.WebView.Sample.Android -c Release -t:SignAndroidPackage -m:1 -p:UseSharedCompilation=false -p:GeneratePackageOnBuild=false -p:ModernFormsNextSourceRoot=${{ github.workspace }}/framework -p:EnableWindowsTargeting=true
       - name: Build isolated AndroidX origin research APK
         run: dotnet build research/AndroidOriginProbe -c Release -t:SignAndroidPackage -m:1 -p:UseSharedCompilation=false -p:GeneratePackageOnBuild=false -p:ModernFormsNextSourceRoot=${{ github.workspace }}/framework -p:EnableWindowsTargeting=true
+      - name: Isolated public Android source consumer (compile only)
+        shell: pwsh
+        run: ./scripts/test-source-consumer.ps1 -Platform Android -Snapshot '${{ matrix.snapshot }}' -FrameworkRoot '${{ github.workspace }}/framework'

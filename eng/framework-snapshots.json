@@ -1,0 +1,12 @@
+{
+  "CurrentMaster": {
+    "commit": "7cfa44e9a992c30d5b1cf5fa76a147eeb2539f56",
+    "directory": "framework-master-7cfa44e",
+    "provenance": "master captured 2026-10-18T16:17:09Z; development only, not official package qualification"
+  },
+  "HistoricalBaseline": {
+    "commit": "69c5ea2b20b07d9df801340c8ae9e3e1ca5dfbc3",
+    "directory": "framework-69c5ea2",
+    "provenance": "original NativeViewHost bootstrap baseline; retained comparison lane"
+  }
+}
