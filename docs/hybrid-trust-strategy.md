@@ -185,6 +185,10 @@ have independent qualification/packaging/approval gates and do not depend on Hyb
 
 ## Delivery and validation
 
+The separate [execution-world probe](windows-world-experiment.md) now exercises the
+public SDK in an unprivileged hostile fixture. A measured DOM confused-deputy attack
+preserves the privileged NO-GO; it does not qualify this ADR's whole-app realm.
+
 Separate strategy branch/PR; no runtime/public API/dependency/policy changes in this stage.
 Delivered in open [PR #43](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/43),
 implementation `2443c61`, based on verified #42 for sequential review; no automatic merge.

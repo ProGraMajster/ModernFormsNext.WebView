@@ -53,6 +53,8 @@ jobs:
         run: dotnet build research/BlazorFeasibility.Windows -c Release -m:1 -p:UseSharedCompilation=false -p:GeneratePackageOnBuild=false -p:ModernFormsNextSourceRoot=${{ github.workspace }}/framework
       - name: Validate Razor and public WebViewManager contracts without native UI
         run: dotnet run --project research/BlazorFeasibility.Windows -c Release --no-build -- --validate-contracts
+      - name: Build isolated execution-world research fixture
+        run: dotnet build research/WindowsWorldProbe -c Release -m:1 -p:UseSharedCompilation=false -p:GeneratePackageOnBuild=false -p:ModernFormsNextSourceRoot=${{ github.workspace }}/framework
   android:
     runs-on: ubuntu-latest
     defaults:
