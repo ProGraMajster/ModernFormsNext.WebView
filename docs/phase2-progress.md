@@ -13,6 +13,10 @@ preserve historical states, including then-open #39/#40.
 Windows and Android native RUNTIME PASS both, including the new failure matrix and
 Windows outstanding-RPC host recreation. Delivery/CI is tracked on its separate open PR.
 
+#19 delivery: [PR #41](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/41),
+implementation `68c97947f548910d335c07b6b69dc177af24c340`; issue remains open for review
+and its privileged portion remains gated. No new PR is merged automatically.
+
 ## Current follow-up delivery
 
 [The current detailed report](phase2-followup-report.md) supersedes historical state below:

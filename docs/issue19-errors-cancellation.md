@@ -92,3 +92,12 @@ The separate AndroidX probe sources/JavaScript are unchanged; its fresh #39 nati
 qualification is recorded separately rather than relabeled as a new #19 probe run.
 Hosted exact delivery-head SHA/jobs and PR are recorded with delivery. The new PR stays
 open; privileged handler work remains blocked and no release is created.
+
+Delivered in open [PR #41](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/41),
+implementation `68c97947f548910d335c07b6b69dc177af24c340`, based on merged main `b329da3`.
+Delivery metadata changes documentation only; exact final-head SHA and terminal hosted
+shared/Windows/Android results are recorded on the PR after completion.
+The main framework advanced externally to `1fc6d8a9d2f9dd31f1279830cdbe60e9eec557b1`
+during this work; it was read-only here. Diff inspection found no changes from the approved
+pin in NativeViewHost, NativeViewHosting or either typed native-view site. This is contract
+inspection, not a full build against that newer framework head. The approved pin is unchanged.
