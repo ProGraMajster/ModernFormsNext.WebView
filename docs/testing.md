@@ -42,6 +42,9 @@ unused WPF/WinForms wrappers. The Windows adapter keeps the SDK's build/buildTra
 targets private: its resolved Core assembly/loader content still flow through project
 references. This fixes the external MSB3277 WindowsBase conflict without suppressing
 warnings or injecting repository targets into the consumer. Consumer builds use -warnaserror.
+Code directly using Microsoft.Web.WebView2.Core types must declare its own SDK reference;
+the Windows error-mapping tests and isolated world research do so explicitly. Ordinary
+WebView's public platform-neutral API does not require those native SDK types.
 These checks prove neither official NuGet/API-ABI compatibility nor native behavior.
 Use HistoricalBaseline with its matching root for comparison. Wrong SHA/dirty dependencies
 fail before building. Logs/result.json retain both repository identities, SDK and evidence mode.
