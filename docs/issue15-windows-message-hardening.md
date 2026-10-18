@@ -1,5 +1,9 @@
 # #15 — Windows message hardening and security decision
 
+Delivery update: #40 was normally merged after its [final audit](pr39-40-final-audit.md).
+Then-open PR wording below is historical. Issue #15 remains OPEN/PARTIAL. The
+[whole-realm strategy](hybrid-trust-strategy.md) grants no authentication approval.
+
 ## Scope and decision
 
 **PARTIAL implementation; privileged original-caller policy NO-GO.** This increment

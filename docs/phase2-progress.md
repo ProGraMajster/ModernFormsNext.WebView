@@ -1,4 +1,4 @@
-# Phase 2 progress — 2026-10-17
+# Phase 2 progress — 2026-10-18
 
 ## Maturity follow-up
 
@@ -24,6 +24,16 @@ verified before #22 implementation. [#22's executable prototype/ADR](issue22-bla
 tests public .NET10 APIs, compiled Razor/native controls, scoped lifetime and actual CSP
 startup denial. Interactive Blazor remains NO-GO under the current contract; no #23–#31
 implementation or privileged native IPC is enabled.
+
+#22 delivery [PR #42](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/42),
+implementation `72a3aa0`, final `17e3c8a4fbfc94563d25a2e88afc62ea6a8c16f4`: all shared/
+Windows/Android jobs terminal SUCCESS in [PR CI](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39127365659)
+and [push CI](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39127362343),
+verified before the [separate Hybrid strategy](hybrid-trust-strategy.md). That strategy
+defines verifiable whole-realm/platform gates and isolated-world alternatives, without
+promoting current channels or changing the original-caller NO-GO. Both candidates remain
+unqualified. The [maturity report](phase2-maturity-report.md) supersedes historical
+delivery states below; new #41/#42 and strategy PRs stay open.
 
 ## Current follow-up delivery
 

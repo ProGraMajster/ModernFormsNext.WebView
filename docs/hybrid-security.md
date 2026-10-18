@@ -1,5 +1,10 @@
 # Phase 2 trust matrix and architecture decision
 
+Current follow-up: the [trust strategy ADR](hybrid-trust-strategy.md) defines a candidate
+whole-application realm and alternative world research with explicit unmet gates.
+Whole-realm authorization is distinct from identifying one script. Neither model is
+qualified; all current product messages remain untrusted and privileges remain off.
+
 Decision (2026-10-17): local static resources are usable independently of Hybrid/RPC.
 There is no privileged message dispatch on either platform in this increment. Existing
 ExecuteScriptAsync/PostMessageAsync/WebMessageReceived semantics remain compatible.

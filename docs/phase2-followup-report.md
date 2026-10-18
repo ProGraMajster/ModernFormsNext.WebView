@@ -1,5 +1,9 @@
 # Phase 2 follow-up report — 2026-10-17
 
+Historical report. The [2026-10-18 maturity report](phase2-maturity-report.md) supersedes
+the then-open #39/#40 and then-current main stated below. They were subsequently normally
+merged; #15 remains OPEN/PARTIAL. Current #19/#22/Hybrid strategy deliveries stay open.
+
 ## Repository and delivery status
 
 Repository: [ModernFormsNext.WebView](https://github.com/ProGraMajster/ModernFormsNext.WebView).

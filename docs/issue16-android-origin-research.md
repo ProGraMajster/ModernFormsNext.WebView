@@ -1,5 +1,9 @@
 # #16 — AndroidX origin/frame research and ADR (2026-10-17)
 
+Delivery update: #39 was normally merged after its [final audit](pr39-40-final-audit.md).
+Then-open wording below describes the original delivery. The original-caller NO-GO is
+unchanged; the [new trust strategy](hybrid-trust-strategy.md) is an unqualified proposal.
+
 Decision: **GO for the bounded native-metadata prototype; NO-GO for privileged original-caller
 authentication using the tested main-world object.** No production authentication capability,
 C# registry or AddJavascriptInterface fallback is enabled. #17 remains gated.

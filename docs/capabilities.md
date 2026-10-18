@@ -61,3 +61,8 @@ The optional [#22 research executable](issue22-blazor-feasibility.md) is outside
 projects. It demonstrates passive compiled Razor rendering and public manager seams;
 interactive Blazor startup is NO-GO under current CSP/IPC contracts. Ordinary WebView
 acquires no ASP.NET dependencies or Blazor capability from that experiment.
+
+The [whole-realm/world strategy](hybrid-trust-strategy.md) is a proposed security contract,
+not an implemented capability. Current authentication flags stay false; SDK/native frame
+context, CSP and correlation are separate evidence from original-script authorization.
+Separate views do not imply Android cookie/profile or process isolation.
