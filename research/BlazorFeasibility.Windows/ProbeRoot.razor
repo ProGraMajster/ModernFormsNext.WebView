@@ -1,0 +1,17 @@
+@namespace ModernFormsNext.WebView.BlazorProbe
+@using Microsoft.AspNetCore.Components
+@implements IDisposable
+@inject ProbeScope Scope
+
+<h1>Compiled Razor component</h1>
+<p>Native MFN button updates this passive Razor snapshot.</p>
+<p id="razor-count">@Count</p>
+<p id="scope-id">@Scope.Identity</p>
+<div id="interactive-root">Interactive Blazor startup is under examination.</div>
+
+@code {
+    /// <summary>Gets or sets the value supplied by the native research application.</summary>
+    [Parameter] public int Count { get; set; }
+    /// <inheritdoc/>
+    public void Dispose() => Interlocked.Increment(ref Scope.Counters.ComponentsDisposed);
+}

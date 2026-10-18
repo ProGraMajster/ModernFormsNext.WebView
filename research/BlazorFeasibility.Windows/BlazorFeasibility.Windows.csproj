@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.17763.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>ModernFormsNext.WebView.BlazorProbe</RootNamespace>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/ModernFormsNext.WebView.Windows/ModernFormsNext.WebView.Windows.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebView" GeneratePathProperty="true" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <EmbeddedResource Include="Assets/bootstrap.js" LogicalName="Probe.bootstrap.js" />
+    <EmbeddedResource Include="$(PkgMicrosoft_AspNetCore_Components_WebView)/staticwebassets/blazor.webview.js" LogicalName="Probe.blazor.webview.js" />
+    <EmbeddedResource Include="$(PkgMicrosoft_AspNetCore_Components_WebView)/staticwebassets/blazor.modules.json" LogicalName="Probe.blazor.modules.json" />
+    <Content Include="$(PkgMicrosoft_AspNetCore_Components_WebView)/THIRD-PARTY-NOTICES.txt" Link="licenses/ASP.NET-THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="licenses/ASP.NET-LICENSE.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
