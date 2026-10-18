@@ -110,7 +110,8 @@ The [Hybrid strategy ADR](docs/hybrid-trust-strategy.md) separates whole-app-rea
 from individual-script identity, defines immutable content/separate unprivileged views,
 platform/world research and revocation/authorization acceptance gates. It enables no
 capability: neither candidate is qualified; #15 stays OPEN/PARTIAL and #17/#13/#18 stay
-blocked. The [maturity report](docs/phase2-maturity-report.md) is the current four-stage
+blocked. It is delivered in open [PR #43](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/43).
+The [maturity report](docs/phase2-maturity-report.md) is the current four-stage
 delivery/evidence view. A strategy document does not satisfy privileged transport gates.
 
 PR #36/#37/#38 are merged normally; issues #33/#11/#12 are complete within their scoped

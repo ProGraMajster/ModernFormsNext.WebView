@@ -35,6 +35,12 @@ promoting current channels or changing the original-caller NO-GO. Both candidate
 unqualified. The [maturity report](phase2-maturity-report.md) supersedes historical
 delivery states below; new #41/#42 and strategy PRs stay open.
 
+Strategy delivery: open [PR #43](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/43),
+implementation `2443c61`. Fresh full Debug/Release 207/207 each, zero warnings/errors/skips;
+product Windows/Android native, AndroidX full matrix/recreation, Razor contracts/native
+and fresh profile cleanup PASS both configurations. These are current-policy probes,
+not privileged realm/world qualification. Final delivery HEAD/CI is recorded on the PR.
+
 ## Current follow-up delivery
 
 [The current detailed report](phase2-followup-report.md) supersedes historical state below:

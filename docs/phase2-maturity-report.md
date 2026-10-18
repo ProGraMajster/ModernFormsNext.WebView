@@ -16,7 +16,7 @@ no automatic merge, issue closure, package/release publication or framework chan
 | 1, Windows #15 | [#40](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/40) | MERGED `b329da3eb114f9cd713b60feffe7242b22c0f0e1`; PARTIAL, issue stays open |
 | 2, errors/cancellation #19 | work/issue-19-error-cancellation, [#41](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/41) | OPEN; real deadline/cancellation defects fixed; privileged portion blocked |
 | 3, Blazor #22 | work/issue-22-blazor-feasibility, [#42](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/42) | OPEN; executable public .NET10 Windows prototype; interactive NO-GO under current content/security contract |
-| 4, Hybrid #10/#15/#17 | work/issue-10-hybrid-trust-strategy, separate strategy PR | Whole-realm/world proposal with measurable unmet gates; privileges remain disabled |
+| 4, Hybrid #10/#15/#17 | work/issue-10-hybrid-trust-strategy, [#43](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/43) | OPEN; whole-realm/world proposal with measurable unmet gates; privileges remain disabled |
 
 #41 is based on merged main. #42 is stacked on verified #41 for sequential review;
 its research is independent of privileged handler work. The strategy follows verified
@@ -36,6 +36,7 @@ Full #23–#31 has not started. Baseline #7/#8 remains independent of Hybrid/Bla
 
 Each preceding delivery was checked before the next stage. Strategy final head/jobs
 are recorded in its PR after CI completes, avoiding a self-referential commit SHA.
+Strategy implementation `2443c61` is delivered in open PR #43, based on verified #42.
 Hosted shared/adapter tests, signed APK and research compilation are not native UI or
 emulator execution. Windows hosted CI additionally runs actual Razor/public-manager
 contract mode without native UI. The [merge audit](pr39-40-final-audit.md) has full

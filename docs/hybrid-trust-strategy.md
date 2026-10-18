@@ -182,6 +182,8 @@ have independent qualification/packaging/approval gates and do not depend on Hyb
 ## Delivery and validation
 
 Separate strategy branch/PR; no runtime/public API/dependency/policy changes in this stage.
+Delivered in open [PR #43](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/43),
+implementation `2443c61`, based on verified #42 for sequential review; no automatic merge.
 Fresh Debug/Release product, AndroidX recreation and Windows Razor probe results are
 recorded in the [maturity report](phase2-maturity-report.md). They exercise current
 fail-closed behavior and measured counterexamples, not authentication of this proposed
