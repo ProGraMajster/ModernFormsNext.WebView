@@ -7,9 +7,10 @@ using Browser = global::Android.Webkit.WebView;
 
 namespace ModernFormsNext.WebView.Android;
 
-internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPeerClient client) : IWebViewPeer, IWebViewLocalContentPeer
+internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPeerClient client) : IWebViewPeer, IWebViewLocalContentPolicyPeer
 {
     public bool SupportsLocalContent => Current && view is not null;
+    public bool SupportsLocalContentPolicy => SupportsLocalContent;
     private readonly IWebViewPeerClient callbacks = client;
     private Browser? view;
     private AndroidViewPeer? attachment;

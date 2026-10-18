@@ -52,6 +52,16 @@ internal static class Program
                 { form.Controls.Add(form.Browser); form.Controls.SetChildIndex(form.Browser, 0); });
                 RuntimeValidation.Require(await form.Browser.ExecuteScriptAsync("window.localAnswer") == "42", "local resources replay after reparent");
                 Console.WriteLine("PASS cross-window reparent + replay + history reset");
+                await RuntimeValidation.NavigateAsync(form.Browser, () => form.Browser.NavigateToLocalContent(ApplicationContentSample.Create()));
+                await LocalContentPolicyRuntimeValidation.AssertApplicationAsync(form.Browser);
+                var priorPolicyDocument = reparentTransport.CurrentDocument;
+                await RuntimeValidation.NavigateAsync(form.Browser, () => second.Controls.Add(form.Browser));
+                RuntimeValidation.Require(priorPolicyDocument.CancellationToken.IsCancellationRequested, "application policy reparent revokes old canonical context");
+                await LocalContentPolicyRuntimeValidation.AssertApplicationAsync(form.Browser);
+                await RuntimeValidation.NavigateAsync(form.Browser, () =>
+                { form.Controls.Add(form.Browser); form.Controls.SetChildIndex(form.Browser, 0); });
+                await LocalContentPolicyRuntimeValidation.AssertApplicationAsync(form.Browser);
+                Console.WriteLine("PASS native application policy self fetch/base across cross-window peer recreation");
                 Console.WriteLine("RUNTIME PASS");
             }
             catch (Exception error) { Console.WriteLine("RUNTIME FAIL: " + error); Environment.ExitCode = 1; }

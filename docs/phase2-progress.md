@@ -2,6 +2,18 @@
 
 ## Maturity follow-up
 
+Current continuation: #41/#42/#43 passed fresh audits, final-head CI and normal merges
+into `b9a5c5e918cc549c0349dbbb13c144db2e7d0deb`; post-merge main CI is SUCCESS.
+[Exact review/merge/native report](pr41-43-final-audit.md). #15 remains OPEN/PARTIAL;
+issues #19/#22/#10 are not closed by accepting bounded fixes/research.
+
+New scoped issues #44/#45/#46 cover typed local policy, native qualification and later
+platform controls. [The first policy ADR/API](local-content-policy.md) changes only explicit
+per-catalog None/Self choices; defaults and all native privilege gates remain intact.
+Delivery and final QA are recorded with its separate PR. The older states below, including
+then-open #41–#43, are historical. Controlled Blazor assets are a separate next experiment;
+successful self fetch/base alone does not approve renderer/DI/interop attachment.
+
 #39 → #40 were finally audited, freshly qualified and normally merged into main
 `b329da3eb114f9cd713b60feffe7242b22c0f0e1`; [post-merge CI](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39053637461)
 is SUCCESS. [Merge report](pr39-40-final-audit.md) has every SHA/CI/result. #15 stays

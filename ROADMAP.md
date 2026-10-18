@@ -88,6 +88,23 @@ calls only; bounded protocol validation is independent of the pending authentica
 
 ## Subsequent verified state
 
+Current security/configuration continuation: #41 → #42 → #43 are now normally merged
+into main `b9a5c5e`, with [final exact-head audit](docs/pr41-43-final-audit.md) and green
+post-merge CI. #15 stays OPEN/PARTIAL; original-caller and interactive Blazor NO-GO remain.
+Older open-PR wording below describes historical delivery.
+
+[#44 typed policy](https://github.com/ProGraMajster/ModernFormsNext.WebView/issues/44)
+and [#45 native effects](https://github.com/ProGraMajster/ModernFormsNext.WebView/issues/45)
+extend the canonical immutable catalog with None/Self selectors and an explicit Application
+profile. [API/effects/risks/examples](docs/local-content-policy.md) retain the exact default
+CSP and reject nondefault policy on unsupported peers. Self connections/base permit a new
+controlled #22 asset experiment; they do not authorize IPC or full #23–#31.
+[#46](https://github.com/ProGraMajster/ModernFormsNext.WebView/issues/46) tracks later
+platform controls/qualification, without a global disable switch or all-options rewrite.
+The next ordered increments are controlled Blazor A-assets/B-IPC research, a bounded
+Hybrid trust experiment and an independent baseline #7 readiness checklist. No new PR
+from these increments may merge automatically, and no package/release is authorized.
+
 Latest: #39/#40 normally merged, local main `b329da3`. The
 [final audit](docs/pr39-40-final-audit.md) records exact heads/CI and fresh full/native
 checks. #15 remains PARTIAL/open; the parent-relay model remains privileged NO-GO.

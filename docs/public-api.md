@@ -129,3 +129,14 @@ The inherited Skia placeholder says WebView and starts no browser/network operat
 Source is hidden because the current Designer deliberately does not edit Uri or execute converters.
 SourceAddress serializes that logical URI through its supported string path; JS and UserAgent use
 primitive properties. Raw HTML is a runtime operation, not Designer content serialization.
+
+## Typed local content policy
+
+WebViewLocalContent retains its original constructor and adds `(resources, policy)` plus
+get-only Policy. WebViewLocalContentPolicy is immutable: None/Self selectors Scripts,
+Styles, Images, Connections and BaseUri; Default preserves the exact old CSP and Application
+opts in only to self connections/base URI. ContentSecurityPolicy exposes generated text
+for diagnostics, with no raw setter. Undefined selectors/null policy fail at construction.
+The optional IWebViewLocalContentPolicyPeer/ConfigurableLocalContent capability prevents
+silently ignored policy on older/custom adapters. This API grants no native privileges.
+See the [policy reference/examples](local-content-policy.md) for activation and risks.

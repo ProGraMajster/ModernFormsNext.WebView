@@ -1,5 +1,9 @@
 # Hybrid trust strategy ADR — #10/#15/#17 (2026-10-18)
 
+Delivery update: #43 was normally merged after [fresh final review](pr41-43-final-audit.md).
+The candidate models remain unqualified. The [new catalog policy](local-content-policy.md)
+controls content loading only; it is not the verified realm/native channel proposed here.
+
 ## Decision and scope
 
 **Privileged JavaScript → C# remains NO-GO on both current product adapters.** This ADR

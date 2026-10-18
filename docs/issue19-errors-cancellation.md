@@ -1,5 +1,9 @@
 # #19 — errors, deadlines and cancellation
 
+Delivery update: #41 was normally merged after [fresh final review](pr41-43-final-audit.md).
+Then-open PR wording below is historical; the privileged portion remains blocked and
+issue #19 remains open. No authentication upgrade is implied by error/cancellation fixes.
+
 ## Implemented scope
 
 This extends the existing WebView, WebViewTransport and WebViewRpcClient contracts.
