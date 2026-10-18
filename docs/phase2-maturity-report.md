@@ -89,7 +89,8 @@ changed. No template/main-framework edit or new public API stability promise.
 | #42 implementation/delivery | Same 207/207 and zero warnings/errors/skips; research build/contracts PASS both | Product Windows/Android PASS both; Razor probe PASS both with intentional interactive NO-GO |
 | Hybrid strategy, unchanged runtime sources | Fresh 207/207 each, zero warnings/errors/skips; research builds/contracts PASS both | Fresh product Windows/Android PASS both; AndroidX full matrix/Activity recreation PASS both; Razor native/profile cleanup PASS both with interactive NO-GO |
 
-SDK10.0.401/runtime10.0.12, Windows WebView2 SDK1.0.4258.31/runtime155.0.4283.60,
+SDK10.0.401/runtime10.0.12, Windows WebView2 SDK1.0.4258.31: runtime155.0.4283.60
+for #39/#40/#41, runtime155.0.4283.62 for #22 and strategy (both configurations),
 Android API34 x86_64/provider com.google.android.webview113.0.5672.136, JDK21. Only
 emulator-5554 was used; no physical phone was touched. API34 never qualifies API23 runtime.
 Research AndroidX Release is Mono AOT/partial trimming; that is not NativeAOT/full trimming.
@@ -102,6 +103,9 @@ Android APK, `adb -s emulator-5554 install -r`, explicit validation Intent and P
 terminal logs. Research APK: SignAndroidPackage and its Validate.ps1 -Recreate in both
 configurations. Razor: build, `--validate-contracts` and its native Validate.ps1 in both.
 Native validation is automated engine/host execution, not UIA or human visual acceptance.
+Final native-log comparison corrected the #22 report's earlier runtime-version attribution;
+the product initialization logs record the update between #19 and #22. No repeat run or
+different source tree is substituted for the originally executed evidence.
 
 #22 local self-contained win-x64 without trimming: zero warnings, published contracts and
 native PASS. Default partial trim: 193 warning log lines, native initialization FAIL.
