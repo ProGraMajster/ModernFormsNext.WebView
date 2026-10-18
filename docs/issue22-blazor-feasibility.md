@@ -98,7 +98,8 @@ Microsoft.AspNetCore.Components packages after the research restore/build.
 
 ## Executed validation
 
-On .NET SDK10.0.401/runtime10.0.12, Windows SDK1.0.4258.31/runtime155.0.4283.60:
+On .NET SDK10.0.401/runtime10.0.12, Windows SDK1.0.4258.31/runtime155.0.4283.62
+(native product logs in both configurations; earlier #19 used155.0.4283.60):
 
 | Lane | Result |
 | --- | --- |

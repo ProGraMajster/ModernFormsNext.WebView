@@ -131,3 +131,11 @@ suite on Ubuntu; Windows builds the sample and tests its adapter queue; Android 
 workload/SDK and explicitly selects JDK 21, runs the pure policy tests and signs a local Release APK. All builds are sequential,
 use no publishing secrets and perform no package deployment. Hosted CI execution requires an
 authorized push/PR; local command reproduction alone is not a remote CI pass.
+
+## Current Hybrid security qualification
+
+The [strategy acceptance matrix](hybrid-trust-strategy.md) distinguishes executed baseline
+rejection/correlation tests from unimplemented trusted-realm/world/handler qualification.
+Fresh product Debug/Release/native, AndroidX recreation and Windows Razor probe runs for
+this strategy are recorded in the [maturity report](phase2-maturity-report.md). No new
+runtime code or mirror tests are added merely to make a documentation-only ADR green.

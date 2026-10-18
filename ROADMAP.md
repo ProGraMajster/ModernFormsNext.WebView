@@ -42,8 +42,10 @@ Baseline #1-#6 -> #7 preview -> #8 stable
 #10 architecture -> #32 resources + #33 security matrix -> #14 local content
 #10 -> #11 transport -> #12 versioned RPC
 #33 + #11 + #12: MERGED; unprivileged correlation/RPC only
-#16 Android research: prototype delivered, privileged parent-relay policy NO-GO
+#16 Android research: prototype merged, privileged parent-relay policy NO-GO
 #14 + #12 + #33 -> #15 Windows: partial hardening; original-caller gate OPEN
+#10 trusted whole-application realm strategy: PROPOSED, not authenticated caller identity
+#10 reviewed content/realm + native qualification -> fresh #15/#17 security decision (BLOCKED)
 #16 new verified trust contract + #12/#14/#33 -> #17 Android transport (BLOCKED)
 #12 + verified platform transport -> #13 explicit handlers
 #13 + #14 + supported secure transport -> #18 Hybrid control
@@ -91,8 +93,8 @@ Latest: #39/#40 normally merged, local main `b329da3`. The
 checks. #15 remains PARTIAL/open; the parent-relay model remains privileged NO-GO.
 [#19](docs/issue19-errors-cancellation.md) fixes total conversion deadlines and coincident
 cancellation/error priority with canonical/native lifetime regressions. Privileged error
-mapping stays blocked; #13/#17/#18 remain gated. Next: bounded #22 public-API feasibility,
-then a separate trust strategy. Older delivery records below are historical.
+mapping stays blocked; #13/#17/#18 remain gated. #22 feasibility and a separate trust
+strategy follow in open PRs. Older delivery records below are historical.
 
 #19 is delivered in open [PR #41](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/41),
 final head `1facdc2`, all three exact-head CI jobs SUCCESS; full Debug/Release 207/207 and
@@ -100,7 +102,17 @@ both native platforms PASS. [#22 research](docs/issue22-blazor-feasibility.md) n
 an executable .NET10 Windows Razor/public-WebViewManager prototype. Passive rendering,
 DI, assets, dispatcher and disposal pass, while unmodified interactive startup is blocked
 by connect-src/base-uri policy and unverified privileged IPC remains disabled. Full #23–#31
-stay gated. A separate Hybrid trust strategy must address the measured constraints.
+stay gated. Open [PR #42](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/42)
+has final head `17e3c8a` with all three exact-head CI jobs SUCCESS. Its local publish
+diagnostics leave trimming unqualified and NativeAOT runtime unexecuted.
+
+The [Hybrid strategy ADR](docs/hybrid-trust-strategy.md) separates whole-app-realm trust
+from individual-script identity, defines immutable content/separate unprivileged views,
+platform/world research and revocation/authorization acceptance gates. It enables no
+capability: neither candidate is qualified; #15 stays OPEN/PARTIAL and #17/#13/#18 stay
+blocked. It is delivered in open [PR #43](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/43).
+The [maturity report](docs/phase2-maturity-report.md) is the current four-stage
+delivery/evidence view. A strategy document does not satisfy privileged transport gates.
 
 PR #36/#37/#38 are merged normally; issues #33/#11/#12 are complete within their scoped
 criteria. [Merge audit](docs/pr36-38-final-audit.md) records history, CI and fresh qualification.

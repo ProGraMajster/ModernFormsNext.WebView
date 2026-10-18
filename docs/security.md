@@ -16,6 +16,10 @@ No file access, directory mapping or filesystem bridge API is exposed. The separ
 NavigateToLocalContent operation serves only explicitly public immutable bytes at a
 reserved HTTPS origin; [local content](local-content.md) specifies path/MIME/CSP policy.
 The [trust matrix](hybrid-security.md) keeps all privileged dispatch unavailable.
+The [future trust strategy](hybrid-trust-strategy.md) defines unmet whole-realm/platform
+acceptance gates; a local origin, immutable bytes, Source check or document token alone
+must never enable native privileges. Untrusted scripts sharing a reachable main-world
+object cannot be distinguished by the current channels.
 
 NavigationStarting cancellation is a useful main-frame filter, not a sandbox. It does not
 intercept all subresources, scripts, fetches, frames, POSTs or every native redirect path.
