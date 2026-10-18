@@ -16,10 +16,16 @@ new-window management and DevTools remain future work; permissions and new windo
 are denied and downloads are not saved automatically.
 
 Phase 2 adds [experimental local resources](docs/local-content.md): explicitly public,
-immutable HTML/CSS/JS/images at an isolated HTTPS origin, fixed CSP and native request
+immutable HTML/CSS/JS/images at an isolated HTTPS origin, restrictive default CSP and native request
 interception on Windows/Android. No directory mapping or HTTP server is exposed.
 This does not enable privileged Hybrid messaging. See [progress and gates](docs/phase2-progress.md)
 and the [trust matrix](docs/hybrid-security.md).
+
+The [explicit local-content policy](docs/local-content-policy.md) adds typed per-catalog
+None/Self restrictions. The original constructor/default policy is unchanged. The
+Application opt-in permits same-origin connections/base URI for reviewed public bytes;
+it enables no C# handlers or authenticated messaging. Both samples expose a **Local fetch
+opt-in** example. Broader platform controls remain separate future work.
 
 Source bootstrap is pinned to framework commit
 `69c5ea2b20b07d9df801340c8ae9e3e1ca5dfbc3`. No published package is selected as the

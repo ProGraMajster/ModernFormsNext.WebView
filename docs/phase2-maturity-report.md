@@ -1,5 +1,10 @@
 # Phase 2 maturity report — 2026-10-18
 
+Historical delivery report. #41/#42/#43 were subsequently normally merged after the
+[final exact-head audit](pr41-43-final-audit.md); their then-open states below are preserved
+as history. The [new typed-policy increment](local-content-policy.md) remains a separate
+reviewable delivery, granting no Hybrid/Blazor privilege.
+
 ## Outcome and delivery order
 
 #39 then #40 were finally audited, freshly qualified for their exact heads and merged

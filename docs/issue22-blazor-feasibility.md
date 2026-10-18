@@ -1,5 +1,10 @@
 # #22 — .NET 10 Blazor feasibility ADR (2026-10-18)
 
+Delivery update: #42 was normally merged after its [final audit](pr41-43-final-audit.md).
+Then-open wording describes the original research delivery. Its default-profile NO-GO
+is preserved. The explicit [application-content policy](local-content-policy.md) permits
+a separate controlled assets experiment; it does not authorize managed page attachment.
+
 ## Decision
 
 **NO-GO for a full interactive BlazorWebView using the current public content/security

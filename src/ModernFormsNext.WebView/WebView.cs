@@ -85,7 +85,9 @@ public class WebView : NativeViewHost
     public WebViewCapabilities BrowserCapabilities => IsInitialized ? WebViewCapabilities.UriNavigation |
         WebViewCapabilities.RawHtml | WebViewCapabilities.History | WebViewCapabilities.Scripting |
         WebViewCapabilities.Messaging | WebViewCapabilities.NavigationCancellation | WebViewCapabilities.UserAgent |
-        (lease?.Peer is IWebViewLocalContentPeer { SupportsLocalContent: true } ? WebViewCapabilities.LocalContent : WebViewCapabilities.None) : WebViewCapabilities.None;
+        (lease?.Peer is IWebViewLocalContentPeer { SupportsLocalContent: true } ? WebViewCapabilities.LocalContent : WebViewCapabilities.None) |
+        (lease?.Peer is IWebViewLocalContentPolicyPeer { SupportsLocalContent: true, SupportsLocalContentPolicy: true }
+            ? WebViewCapabilities.ConfigurableLocalContent : WebViewCapabilities.None) : WebViewCapabilities.None;
 
     /// <summary>Gets or enables JavaScript and the minimal string bridge; defaults to false.</summary>
     /// <remarks>UI thread only. Disabling cancels outstanding scripts/messages. Page code is untrusted.</remarks>
@@ -158,20 +160,25 @@ public class WebView : NativeViewHost
 
     /// <summary>Loads explicitly public application resources at their isolated HTTPS origin.</summary>
     /// <remarks>
-    /// UI thread only. No filesystem mapping or server is created. Fixed CSP allows same-origin
-    /// external scripts/styles/images only; JavaScript still defaults off. Navigation/reload and
+    /// UI thread only. No filesystem mapping or server is created. The catalog's immutable policy
+    /// defaults to self external scripts/styles/images only; JavaScript still defaults off. Navigation/reload and
     /// canonical host recreation retain the immutable collection. Messages remain untrusted.
     /// Unsupported ready adapters throw NotSupportedException; queued requests fail with Engine
-    /// on initialization if interception is unavailable. Does not trigger framework layout.
+    /// on initialization if interception or the selected policy is unsupported. Nondefault policies require
+    /// ConfigurableLocalContent; choosing one never authenticates page messages. Does not trigger framework layout.
     /// </remarks>
     public void NavigateToLocalContent(WebViewLocalContent content, string entryPath = "index.html")
     {
         VerifyAccess(); ArgumentNullException.ThrowIfNull(content);
         Uri uri = content.GetUri(entryPath);
-        if (IsInitialized && lease?.Peer is not IWebViewLocalContentPeer { SupportsLocalContent: true })
-            throw new NotSupportedException("This browser does not support controlled local resources.");
+        if (IsInitialized && !CanLoadLocalContent(content))
+            throw new NotSupportedException("This browser does not support the selected local-content policy.");
         Submit(new(++requestId, uri, null) { LocalContent = content });
     }
+
+    private bool CanLoadLocalContent(WebViewLocalContent content) =>
+        lease?.Peer is IWebViewLocalContentPeer { SupportsLocalContent: true } &&
+        (content.Policy.IsDefault || lease.Peer is IWebViewLocalContentPolicyPeer { SupportsLocalContentPolicy: true });
 
     private void Submit(WebViewNavigationRequest request)
     {
@@ -188,7 +195,7 @@ public class WebView : NativeViewHost
     public bool Reload()
     {
         VerifyAccess(); if (!IsInitialized || isLoading || requested is null) return false;
-        if (requested.LocalContent is not null && lease?.Peer is not IWebViewLocalContentPeer { SupportsLocalContent: true }) return false;
+        if (requested.LocalContent is { } local && !CanLoadLocalContent(local)) return false;
         NewCommand(true);
         // Reapply the collection after a canceled replacement may have revoked native
         // resource access. Reloading local content reissues the current URI explicitly.
@@ -374,7 +381,7 @@ public class WebView : NativeViewHost
             if (owner.requestId == beforeNotification && owner.requested is { } previous)
             {
                 var replay = previous with { Id = ++owner.requestId }; owner.requested = replay;
-                if (replay.LocalContent is not null && owner.lease?.Peer is not IWebViewLocalContentPeer { SupportsLocalContent: true })
+                if (replay.LocalContent is { } local && !owner.CanLoadLocalContent(local))
                     NavigationFailed(replay.Id, replay.Uri, WebViewErrorCategory.Engine);
                 else owner.lease?.Peer.Navigate(replay);
             }

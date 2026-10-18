@@ -134,6 +134,16 @@ authorized push/PR; local command reproduction alone is not a remote CI pass.
 
 ## Current Hybrid security qualification
 
+New [typed local policy](local-content-policy.md) validation includes positive raw-HTML
+normal/opaque srcdoc script controls, then inherited script denial, real page-script eval,
+permissive meta-CSP tampering, HTTP response CSP, self JSON/base support, foreign host/port/
+base/script denial, unlisted/method/escaped-path errors, all five selectors, rejected local
+departure, replacement/Stop/reload/default recovery and Windows cross-window replay.
+Native ExecuteScript is an application operation which can bypass page CSP, so page eval
+attacks run from a loaded catalog script. No timeout/skip/policy weakening establishes PASS.
+The current Windows/Android engines differ in the safe retained/fallback base path after
+a rejected foreign base; the invariant is the declared self-origin boundary, not one path.
+
 The [strategy acceptance matrix](hybrid-trust-strategy.md) distinguishes executed baseline
 rejection/correlation tests from unimplemented trusted-realm/world/handler qualification.
 Fresh product Debug/Release/native, AndroidX recreation and Windows Razor probe runs for

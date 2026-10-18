@@ -12,7 +12,7 @@ internal sealed class FakeProvider : IWebViewPeerFactoryProvider
     }
 }
 
-internal sealed class FakePeer(INativeViewSite site, IWebViewPeerClient client) : IWebViewPeer, IWebViewLocalContentPeer
+internal class FakePeer(INativeViewSite site, IWebViewPeerClient client) : IWebViewPeer, IWebViewLocalContentPeer
 {
     public bool SupportsLocalContent { get; set; }
     public IWebViewPeerClient Client { get; } = client;

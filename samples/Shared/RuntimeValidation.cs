@@ -14,6 +14,7 @@ internal static class RuntimeValidation
         await RpcRuntimeValidation.RunAsync(browser, report);
         await RpcFailureRuntimeValidation.RunAsync(browser, report);
         await LocalContentRuntimeValidation.RunAsync(browser, report);
+        await LocalContentPolicyRuntimeValidation.RunAsync(browser, report);
         await NavigateAsync(browser, () => browser.NavigateToHtml(TestContent.Html));
         report("PASS raw HTML + navigation events");
         string json = await browser.ExecuteScriptAsync("testResult()");

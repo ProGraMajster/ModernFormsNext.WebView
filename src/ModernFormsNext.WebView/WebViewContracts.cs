@@ -27,7 +27,10 @@ public enum WebViewCapabilities
     LocalContent = 128,
     /// <summary>Reserved for separately qualified origin/frame-authenticated messaging.</summary>
     /// <remarks>Neither current adapter advertises this flag. Source and request IDs never enable it.</remarks>
-    AuthenticatedMessaging = 256
+    AuthenticatedMessaging = 256,
+    /// <summary>Typed nondefault local-content CSP headers through available native interception; no native privileges.</summary>
+    /// <remarks>Provider/runtime CSP effects require separate qualification. Unsupported policies fail explicitly.</remarks>
+    ConfigurableLocalContent = 512
 }
 
 /// <summary>Describes browser initialization independently of native hosting availability.</summary>
