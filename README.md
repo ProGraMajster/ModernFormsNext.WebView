@@ -27,6 +27,10 @@ Application opt-in permits same-origin connections/base URI for reviewed public 
 it enables no C# handlers or authenticated messaging. Both samples expose a **Local fetch
 opt-in** example. Broader platform controls remain separate future work.
 
+The isolated [Blazor application-policy experiment](docs/blazor-application-policy.md)
+tests original .NET10 asset startup separately from authorized IPC. No interactive
+Blazor host or privileged handler is enabled.
+
 Source bootstrap is pinned to framework commit
 `69c5ea2b20b07d9df801340c8ae9e3e1ca5dfbc3`. No published package is selected as the
 NativeViewHost dependency. See [testing](docs/testing.md) for reproducible build commands.

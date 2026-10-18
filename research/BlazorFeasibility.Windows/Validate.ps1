@@ -1,7 +1,8 @@
 param(
     [ValidateSet('Debug','Release')][string]$Configuration = 'Debug',
     [string]$EvidenceDirectory = (Join-Path $PSScriptRoot '../../artifacts/issue22'),
-    [string]$ExecutablePath
+    [string]$ExecutablePath,
+    [switch]$ApplicationPolicy
 )
 $ErrorActionPreference = 'Stop'
 $executable = if ($ExecutablePath) { [System.IO.Path]::GetFullPath($ExecutablePath) } else {
@@ -23,7 +24,9 @@ try {
     # WebView2 children. Waiting only for the .NET parent can leave seed files locked
     # while browser subprocesses retire. The existing cleanup bound stays unchanged.
     $errorLog = Join-Path $EvidenceDirectory "blazor-$($Configuration.ToLowerInvariant())-stderr.log"
-    $process = Start-Process -FilePath $executable -ArgumentList @('--validate','--profile',('"' + $probeProfileDirectory + '"')) -WorkingDirectory $PSScriptRoot -WindowStyle Hidden -Wait -PassThru -RedirectStandardOutput $log -RedirectStandardError $errorLog
+    $arguments = @('--validate','--profile',('"' + $probeProfileDirectory + '"'))
+    if ($ApplicationPolicy) { $arguments += '--application-policy' }
+    $process = Start-Process -FilePath $executable -ArgumentList $arguments -WorkingDirectory $PSScriptRoot -WindowStyle Hidden -Wait -PassThru -RedirectStandardOutput $log -RedirectStandardError $errorLog
     try { $process.WaitForExit(); $nativeExit = $process.ExitCode }
     finally { $process.Dispose() }
 }

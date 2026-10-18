@@ -5,7 +5,7 @@ existing WebView control/provider/NativeViewHost and public ASP.NET Core10.0.12 
 No MAUI implementation is copied, and no second native host, UI loop or layout/focus
 service is created. ASP.NET dependencies belong only to this project.
 
-**Interactive BlazorWebView: NO-GO under the current content/security contract.**
+**Interactive BlazorWebView: NO-GO under the current IPC/security contract.**
 The runnable prototype shows compiled passive Razor output beside native MFN controls;
 it also attempts unmodified `Blazor.start()` and positively records CSP denial. It does
 not advertise a full interactive host, authenticated IPC or C# handler registry.
@@ -15,6 +15,7 @@ $framework = & ./scripts/bootstrap-framework.ps1
 dotnet build ./research/BlazorFeasibility.Windows -c Debug -m:1 -p:UseSharedCompilation=false -p:GeneratePackageOnBuild=false -p:ModernFormsNextSourceRoot=$framework
 dotnet run --project ./research/BlazorFeasibility.Windows -c Debug --no-build -- --validate-contracts
 ./research/BlazorFeasibility.Windows/Validate.ps1 -Configuration Debug
+./research/BlazorFeasibility.Windows/Validate.ps1 -Configuration Debug -ApplicationPolicy -EvidenceDirectory artifacts/blazor-application
 # Repeat Release. Launch without arguments for the native passive-snapshot demonstration.
 ```
 
@@ -33,7 +34,8 @@ their profiles. The cleanup retry bound is unchanged.
 
 The resource adapter exposes only existing immutable WebViewLocalContent bytes to the
 public IFileProvider seam. No physical directory, watcher, server, TLS exception or CSP
-override is exposed. Native messages remain untrusted and never reach the manager's
+override is exposed. Explicit application-policy mode uses the typed catalog policy
+to permit only self connections/base; it does not grant privileges. Native messages remain untrusted and never reach the manager's
 protected privileged MessageReceived dispatch. The manager's built-in Source check is
 not accepted as original-script authentication.
 
@@ -42,6 +44,10 @@ asset; no runtime download or vendored SDK implementation. ASP.NET Core is MIT l
 the license and package THIRD-PARTY-NOTICES are copied to output/publish. No package or
 release is published. [ADR/results](../../docs/issue22-blazor-feasibility.md) distinguish
 implemented seams, failed interactive startup and unexecuted qualification.
+
+The [application-policy follow-up](../../docs/blazor-application-policy.md) separately
+qualifies original asset startup and rejects the real AttachPage. Asset GO does not
+mean authorized IPC or interactive GO. Default mode retains its positive CSP denials.
 
 Debug/Release research build/contracts/native and full product 207/207 tests/native lanes
 pass. Local self-contained win-x64 without trimming also passes the published probe.
