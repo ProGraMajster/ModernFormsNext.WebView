@@ -38,7 +38,7 @@ the required channel authorization has not been demonstrated.
 
 | Gate | Decision and scope |
 | --- | --- |
-| A: base, self manifest, original boot | GO in native WebView2 Debug run; no managed acknowledgement implied |
+| A: base, self manifest, original boot | GO in native WebView2 Debug/Release; no managed acknowledgement implied |
 | B: authorized AttachPage/native IPC | NO-GO; all messages rejected |
 | Interactive Razor/DI/IJSRuntime/routing | NOT EXECUTED; blocked by B |
 | Public dispatcher/static renderer/disposal | Tested separately; no proof of interactive lifetime |
@@ -60,9 +60,11 @@ local and separate. No product ASP.NET dependency, framework pin change or publi
 
 The first native application-policy run used SDK10.0.401, WebView2 SDK1.0.4258.31 and
 runtime155.0.4283.62, with profile cleanup PASS. Final Debug/Release regression lanes
-and exact delivery-head CI are recorded on the separate research PR. This branch is
-stacked on verified policy PR #47 (140fafe; both hosted runs terminal SUCCESS); it must
-remain open. Full IME/DPI/accessibility/Designer/heap, API23/physical device, privileged
+and exact delivery-head CI are recorded on the separate research PR. This research was
+originally stacked on verified policy PR #47 (140fafe; both hosted runs terminal SUCCESS).
+The owner subsequently authorized final audit and normal merge a98573c, after fresh
+Debug/Release product/research/native checks on current-master snapshot 1fc6d8a.
+Full IME/DPI/accessibility/Designer/heap, API23/physical device, privileged
 realm qualification and new full trim/AOT execution are not claimed.
 
 The public [Boot.WebView.ts](https://github.com/dotnet/aspnetcore/blob/v10.0.12/src/Components/Web.JS/src/Boot.WebView.ts)
