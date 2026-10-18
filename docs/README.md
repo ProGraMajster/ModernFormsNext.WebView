@@ -1,6 +1,6 @@
 # Experimental WebView baseline
 
-- [Current security-policy/Blazor/world delivery report](security-policy-development-report.md)
+- [Security-policy/Blazor/world delivery history and subsequent audit](security-policy-development-report.md)
 - [Independent baseline preview/stable readiness and official package probe](baseline-preview-readiness.md)
 
 ModernFormsNext issue #60 already provides the native hosting contract. This feature package

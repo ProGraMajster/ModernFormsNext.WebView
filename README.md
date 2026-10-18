@@ -31,15 +31,20 @@ The isolated [Blazor application-policy experiment](docs/blazor-application-poli
 tests original .NET10 asset startup separately from authorized IPC. No interactive
 Blazor host or privileged handler is enabled.
 
-Source bootstrap is pinned to framework commit
+The historical source bootstrap baseline is pinned to framework commit
 `69c5ea2b20b07d9df801340c8ae9e3e1ca5dfbc3`. No published package is selected as the
 NativeViewHost dependency. See [testing](docs/testing.md) for reproducible build commands.
+
+Current development is validated using the recorded master snapshot
+1fc6d8a9d2f9dd31f1279830cdbe60e9eec557b1 in a separate source checkout. NativeViewHost
+is planned for official ModernFormsNext 1.12.0; package alignment is deferred until its
+actual publication. Missing hosting API in 1.11.1 is an expected historical control.
 
 The [independent preview/stable checklist](docs/baseline-preview-readiness.md) records
 official package compatibility and remaining native/manual/release gates. Optional
 Hybrid and Blazor are separate from the ordinary WebView release path. The current
 [development report](docs/security-policy-development-report.md) links reviewed merges
-and the new open implementation/research PRs.
+and the original implementation/research delivery snapshots.
 The existing application-owned provider is registered explicitly:
 
 ```csharp

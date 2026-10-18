@@ -166,8 +166,10 @@ application-policy product Activity recreation, full trimming/NativeAOT runtime 
 privileged transport/realm/world. API34 is not evidence for API23. Native effects here
 qualify the listed engines, not a universal network sandbox or future provider versions.
 
-Delivered in open [PR #47](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/47),
+Delivered in [PR #47](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/47),
 implementation `599c9e5`, based on normally merged main `b9a5c5e`. The final delivery HEAD
 and terminal hosted CI are recorded on the PR independently of the local native evidence.
-This PR must not merge automatically. The next separate Blazor experiment must distinguish
-assets startup from authorized IPC/interactivity; no full #23–#31 is authorized by this ADR.
+The owner subsequently authorized its final audit and normal merge ba7260a.
+#44 API is accepted; #45 remains incomplete for outstanding native/manual qualification.
+The separate #48 asset and #49 world experiments are also accepted research with privileged
+IPC/interactivity NO-GO; no full #23–#31 is authorized by this ADR.

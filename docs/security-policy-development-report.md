@@ -1,5 +1,14 @@
 # Security policy, Blazor and baseline report — 2026-10-18
 
+This is the **original delivery snapshot**. Subsequent owner-authorized audits accepted
+#47/#48/#49 as normal merges ba7260a, a98573c and 6c4eb9c. Their original heads/CI below
+remain historical evidence; they are no longer open deliveries. The live #50 PR records
+its final integrated head/audit. Fresh current-master source qualification uses
+1fc6d8a9d2f9dd31f1279830cdbe60e9eec557b1, separately from historical baseline 69c5ea2.
+The owner's binding release decision is NativeViewHost in ModernFormsNext 1.12.0:
+missing 1.11.1 contracts are an expected historical negative control. Source development
+continues; package alignment waits for actual official 1.12.0 and release qualification.
+
 ## Authorized audit and merges
 
 Complete diffs, API/threading/cancellation/resources, native evidence, research dependency
@@ -19,7 +28,7 @@ origin/Activity-recreation research Debug/Release; #43 explicitly reused that un
 research evidence. Accepting NO-GO research did not enable interactivity.
 [Detailed audit and CI/merge proof](https://github.com/ProGraMajster/ModernFormsNext.WebView/blob/140fafe201dac789c1351a629836983f603d64c1/docs/pr41-43-final-audit.md).
 
-## New deliveries remain OPEN
+## Original delivery heads and CI
 
 | Stage / branch | PR / final HEAD | Exact-head CI: all jobs terminal SUCCESS |
 | --- | --- | --- |
@@ -27,10 +36,11 @@ research evidence. Accepting NO-GO research did not enable interactivity.
 | Blazor / work/blazor-application-policy | [48](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/48),93505cccdcf36e4adcb8f0f78475df24c86ca8c7 | [39136623078](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39136623078),[39136619690](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39136619690) |
 | Worlds / work/windows-world-probe | [49](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/49),c87bd6e5d3ffc8ec896eedb590c0c2a2c02c2064 | [39137803285](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39137803285),[39137799416](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39137799416) |
 
-#48 is stacked on verified #47; #49 on verified #48. Previous local validation and
+#48 was originally stacked on verified #47; #49 on verified #48. Previous local validation and
 terminal exact-head CI passed before each next stage. This baseline-readiness branch
 starts independently from main b9a5c5e; its own delivery HEAD/CI are recorded on its PR.
-No new PR was merged or set to auto-merge.
+At that original delivery none was merged. The subsequent accepted merges are identified
+above; this sentence is not the current PR status.
 
 ## Implemented policy and risk
 
@@ -124,19 +134,21 @@ No security policy, warning, timeout, skip or threshold was weakened.
 ## Independent baseline route
 
 The [preview/stable checklist](baseline-preview-readiness.md) and official-package probe
-track the official1.11.1 publication gate independently of Hybrid. This branch changes
+track the expected 1.11.1 negative control and future official 1.12.0 alignment independently
+of Hybrid. The original readiness contribution changes
 only readiness tooling/docs. No product package or release was produced/published.
-Next: review open PRs; obtain approved compatible framework packages through their own
-process; qualify baseline API23/physical/manual/package lanes; review a concrete candidate
+Next: develop on a recorded current-master source snapshot; qualify baseline API23/physical/
+manual lanes; after official 1.12.0, align packages and review a concrete candidate
 before publication approval. Privileged Hybrid/Blazor retain separate trust/IPC gates.
 
 The main framework remained read only, source pin unchanged and pre-existing local
 configuration preserved.
 
-Fresh validation on this independent main-based branch: full restore/sequential
+Original validation on the independent b9a5c5e-based branch: full restore/sequential
 Debug/Release builds with zero warnings/errors,207/207 tests each (158 shared,37 Windows,
 12 Android), zero skipped, and native Windows/Android PASS both configurations.
 Official1.11.1 control consumers compile Debug/Release; required hosting consumers fail
 both with the three missing public types. Android's package index is HTTP404.
-This is an explicit packaging NO-GO despite green source/native regression lanes.
+This is an expected negative1.11.1 control, not a defect blocking source development.
+Preview remains NOT READY until actual official 1.12.0 and release qualification.
 Exact package hashes and the preview/stable checklist are in the linked readiness report.

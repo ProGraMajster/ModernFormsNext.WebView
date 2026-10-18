@@ -88,6 +88,15 @@ calls only; bounded protocol validation is independent of the pending authentica
 
 ## Subsequent verified state
 
+Current accepted state: #47/#48/#49 are normally merged after exact-head reviews and
+fresh current-master snapshot qualification; #44 API is accepted, #45 is incomplete.
+Development continues via a recorded master SHA, with historical 69c5ea2 comparison.
+Official dependency alignment waits for actual ModernFormsNext 1.12.0 publication.
+The expected 1.11.1 negative control is not a development blocker. Ordinary #7/#8 is
+independent of privileged Hybrid/Blazor NO-GO.
+
+## Historical continuation records
+
 Current security/configuration continuation: #41 → #42 → #43 are now normally merged
 into main `b9a5c5e`, with [final exact-head audit](docs/pr41-43-final-audit.md) and green
 post-merge CI. #15 stays OPEN/PARTIAL; original-caller and interactive Blazor NO-GO remain.

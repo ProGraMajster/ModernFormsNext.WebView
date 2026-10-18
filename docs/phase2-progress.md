@@ -2,6 +2,12 @@
 
 ## Maturity follow-up
 
+Latest owner-authorized audit: #47/#48/#49 normally merged as ba7260a, a98573c and 6c4eb9c.
+#44 API is accepted; #45 stays incomplete and #46 is the next scoped product extension.
+Current-master snapshot 1fc6d8a9d2f9dd31f1279830cdbe60e9eec557b1 supports continued source
+development. Official package alignment waits for ModernFormsNext 1.12.0;1.11.1 is only
+an expected historical negative control. The continuation notes below are delivery history.
+
 Current continuation: #41/#42/#43 passed fresh audits, final-head CI and normal merges
 into `b9a5c5e918cc549c0349dbbb13c144db2e7d0deb`; post-merge main CI is SUCCESS.
 [Exact review/merge/native report](pr41-43-final-audit.md). #15 remains OPEN/PARTIAL;
@@ -14,7 +20,7 @@ Delivery and final QA are recorded with its separate PR. The older states below,
 then-open #41–#43, are historical. Controlled Blazor assets are a separate next experiment;
 successful self fetch/base alone does not approve renderer/DI/interop attachment.
 
-Policy delivery: open [PR #47](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/47),
+Policy delivery: [PR #47](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/47), now merged,
 implementation `599c9e5`; full Debug/Release **245/245 each**, zero warnings/errors/skips.
 Windows and Android native PASS both configurations, including actual policy effects,
 working raw frame controls, typed rejection/lifetime recovery and Windows native host replay.

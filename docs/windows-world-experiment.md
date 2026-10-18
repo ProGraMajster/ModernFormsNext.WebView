@@ -32,6 +32,10 @@ permissions, TLS and authentication policy are unchanged.
 
 ## Native matrix
 
+The owner subsequently accepted this research through normal PR #49 merge 6c4eb9c,
+after full Debug/Release product/native and world-probe qualification on current-master
+snapshot 1fc6d8a9d2f9dd31f1279830cdbe60e9eec557b1. Privileged Hybrid remains NO-GO.
+
 The initial successful Debug probe used WebView2 SDK1.0.4258.31/runtime155.0.4283.62
 and .NET SDK10.0.401. Final Debug/Release evidence and exact-head hosted build checks
 are recorded on the separate experiment PR. CI compilation is not native-world execution.

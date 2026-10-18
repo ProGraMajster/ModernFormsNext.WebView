@@ -1,16 +1,39 @@
 # Independent baseline preview/stable readiness (#7/#8)
 
-Assessment date: 2026-10-18. **Preview publication: NO-GO today.**
-This branch starts from normally merged main b9a5c5e. It has no dependency on the
-new policy/Blazor/world branches. Baseline #7 and stable #8 have their own gates;
-optional Hybrid #21, #15 or Blazor #22 are not baseline release prerequisites.
-No package/version/metadata, source pin or main-framework file is changed.
+Assessment date: 2026-10-18. **Development via pinned current-master snapshot;
+package alignment deferred until official ModernFormsNext 1.12.0.**
+Preview is **NOT READY — waiting for official ModernFormsNext 1.12.0 and release
+qualification**. The owner confirmed that NativeViewHost belongs to 1.12.0.
+There is no request to retrofit or republish 1.11.1.
 
-## Official framework compatibility is a real gate
+The original independent contribution started at main b9a5c5e; its final audit integrates
+accepted #47/#48/#49 without losing their code or documentation. Ordinary WebView #7/#8
+still has independent gates: optional Hybrid #21/#15 and Blazor #22 are not prerequisites.
+No package/version/metadata, main-framework source or historical baseline pin is changed.
 
-The live NuGet index and GitHub releases select stable ModernFormsNext1.11.1
+## Current source development and future package alignment
+
+Current-master snapshot: 1fc6d8a9d2f9dd31f1279830cdbe60e9eec557b1, fetched into a
+separate detached checkout. Historical baseline: 69c5ea2b20b07d9df801340c8ae9e3e1ca5dfbc3.
+NativeViewHost, NativeViewHosting and the typed Windows/Android native-site source files
+are identical between those revisions. Fresh full Debug/Release WebView tests/native
+qualification on the recorded current snapshot support **GO for source development**;
+they are not qualification of an official NuGet package or a stable ABI promise.
+Each report identifies its framework SHA; no build/CI follows a floating master.
+
+After actual 1.12.0 publication, verify real NuGet availability, package identities,
+compatible versions, TFMs and both backends including Android. Download official artifacts,
+inspect public API/ABI and native assets/metadata, build isolated Windows/Android consumers,
+run full and native qualification, then prepare a separate package-alignment PR.
+A project version or tag alone does not satisfy this gate. No release is forced here.
+
+## Historical expected negative package control — 1.11.1
+
+The live NuGet index and GitHub releases select stable ModernFormsNext 1.11.1
 (v1.11.1 published 2026-09-22). ModernFormsNext, WindowKit and Backend.Windows have
-official1.11.1 packages; Backend.Android's public NuGet index returns HTTP404.
+official 1.11.1 packages; Backend.Android's public NuGet index returned HTTP404.
+The missing hosting contracts are expected before 1.12.0, not a new defect or a reason
+to stop source development, create a duplicate issue or request a 1.11.1 patch release.
 
 The isolated official-package probe uses SDK10.0.401 and the official NuGet source.
 It first compiles existing public Form/IWindowImpl as a control, then separately
@@ -23,17 +46,18 @@ framework source pin 69c5ea2b20b07d9df801340c8ae9e3e1ca5dfbc3.
 
 The script preserves all logs, restored package SHA256 hashes and result.json under
 ignored artifacts/official-framework-probes. Exit2 means the required public API is
-missing and is an explicit **NO-GO**, not a passing release test. Other unexpected
+missing and is an explicit **NO-GO for that package consumer**, not a passing release test.
+For 1.11.1 this is the expected historical control. Other unexpected
 errors are inconclusive failures. Hosting symbol availability alone would still not
 qualify native behavior, packaging or publication.
 
 Final official-package control compilation passed Debug/Release with zero warnings/errors.
 The separate hosting compilation failed both configurations with exactly three CS0246
 errors: NativeViewHost, INativeViewFactory and WindowsNativeViewSite are missing.
-No other error or warning was present. This is **NO-GO**, not a passing consumer test.
+No other error or warning was present. This is the expected negative 1.11.1 consumer result.
 Evidence is retained under artifacts/official-framework-probes/130c69795e5f4a39a974cf4439ea1b1f.
-This is the existing publication gap tracked by #7/#8 and the source
-bootstrap guard, not a newly invented framework bug. No duplicate framework issue is
+The owner has scheduled these contracts for 1.12.0; no 1.11.1 repair is required.
+The source bootstrap guard remains deliberate. No duplicate framework issue is
 created and the main repository stays read only.
 
 | Official1.11.1 package | Restored nupkg SHA256 |
@@ -42,17 +66,20 @@ created and the main repository stays read only.
 | WindowKit | ECFE66E6C734FAA55A904A56ED83EDB90093BA37E717C2FA3271353A5928D31F |
 | Backend.Windows | A48BCF8B9153DCB26289CF373BEE9C12489D10EE8455238191A863ED2471C7AC |
 
-Fresh independent-baseline full restore/sequential Debug/Release builds passed with
+Original independent-baseline validation used the historical source pin before the policy
+merge. Full restore/sequential Debug/Release builds passed with
 zero warnings/errors;207/207 tests each (158 shared,37 Windows,12 Android), zero skipped.
 Native Windows and emulator-5554/API34 both reached RUNTIME PASS in both configurations.
-Evidence: artifacts/baseline-independent. This branch adds no product runtime code.
+Evidence: artifacts/baseline-independent. The subsequent integrated candidate has 245 tests;
+its current-master and historical-baseline lanes are recorded separately in the final PR
+audit. This readiness contribution adds no product runtime code.
 
 ## Independent release checklist
 
 | Gate | Current evidence | Before preview #7 |
 | --- | --- | --- |
 | Architecture/source baseline | Public NativeViewHost and typed sites at approved pin; real Windows/Android adapters | Keep canonical host/lifetime/focus/dispatcher; no duplicate infrastructure |
-| Official framework dependency | 1.11.1 lacks required hosting API; Android package index404 | Publish/approve compatible official framework packages through their own process, then test isolated consumers without changing this task's pin |
+| Official framework dependency | Expected1.11.1 negative control; source development uses a recorded current-master SHA | Wait for actual official 1.12.0, verify available packages/TFMs/backends, then separately align and qualify consumers; no1.11.1 workaround |
 | Public API | Experimental XML/docs/inventory and neutral contracts exist | Agree preview API/compatibility policy and boundaries; no stable API promise yet |
 | Automated checks | Debug/Release regression and exact-head CI recorded per PR | Terminal successful CI for exact release candidate; preserve all warnings/failures/skips |
 | Native Windows | WebView2 runtime155.0.4283.62; navigation/scripts/lifetime, 50 create/dispose leases, placement/modal/focus basics | Explicit supported Windows/runtime matrix; foreground keyboard/full IME/DPI/accessibility/manual visual and sustained heap qualification |
@@ -74,12 +101,12 @@ keyboard/UIA or human visual result is claimed here.
 
 ## Next steps
 
-1. Review open implementation/research PRs independently; none is automatically merged.
-2. Resolve the official framework/package gate through its own approved release process.
-3. Qualify baseline Windows/Android physical/API23/manual lanes and document support.
-4. Implement/review packaging and isolated package consumers in a separate authorized
-   change, then request explicit publication approval. No package is produced here.
-5. Continue optional Hybrid/Blazor only after their actual authorization/IPC gates pass.
+1. Continue source development and reproducible QA on a recorded current-master SHA;
+   retain the historical pin as an explicitly named comparison lane.
+2. Qualify baseline Windows/Android physical/API23/manual lanes and document support.
+3. After official 1.12.0 is genuinely available, separately align dependencies and qualify
+   package/API/ABI/native consumers, then review packaging and request publication approval.
+   Optional Hybrid/Blazor retains its own authorization gates.
 
 Primary release/index evidence:
 [framework v1.11.1](https://github.com/ProGraMajster/ModernFormsNext/releases/tag/v1.11.1),
