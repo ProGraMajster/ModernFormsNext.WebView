@@ -58,6 +58,13 @@ no pending I/O, user callback or Activity is retained by a collection.
 
 ## Fixed document policy
 
+This section describes the **unchanged default** policy. A catalog can now explicitly
+select an immutable [typed policy](local-content-policy.md), including the Application
+preset permitting only self connections and a self base URI in addition to the default
+sources. It grants no native authority. Changing policy requires constructing/navigating
+to a new catalog; Reload replays the selected policy. Unsupported older/custom adapters
+reject nondefault policy explicitly rather than silently ignoring it.
+
 All success/error responses carry CSP, `nosniff`, `Cache-Control: no-store`,
 `Referrer-Policy: no-referrer`, `X-Frame-Options: DENY` and
 `Cross-Origin-Resource-Policy: same-origin`. No CORS permission is emitted.
@@ -68,8 +75,9 @@ connect-src 'none'; frame-src 'none'; worker-src 'none'; object-src 'none';
 base-uri 'none'; form-action 'none'; frame-ancestors 'none'
 ```
 
-Inline scripts/styles, eval, frames, forms, workers, fetch/XHR/WebSockets and remote
-resources are outside this slice. Use separate local JS/CSS resources. JavaScript still
+In the default profile, inline scripts/styles, page eval, frame/worker resource requests,
+forms, fetch/XHR/WebSockets and remote resources are outside this surface. Inherited
+srcdoc/about:blank contexts are not a complete realm sandbox. Use separate local JS/CSS resources. JavaScript still
 defaults off; enabling it is an explicit application decision. Native ExecuteScriptAsync
 keeps its existing explicit engine semantics; CSP is not a restriction on trusted native
 application code. Baseline strings remain untrusted, with no handler/RPC dispatch.

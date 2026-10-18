@@ -16,6 +16,12 @@ No file access, directory mapping or filesystem bridge API is exposed. The separ
 NavigateToLocalContent operation serves only explicitly public immutable bytes at a
 reserved HTTPS origin; [local content](local-content.md) specifies path/MIME/CSP policy.
 The [trust matrix](hybrid-security.md) keeps all privileged dispatch unavailable.
+The [typed catalog policy](local-content-policy.md) permits explicit None/Self choices
+without a raw CSP/header setter. Application policy changes only self connections/base
+URI; it does not select a verified trusted realm, authenticate a script or grant native
+operations. Default policy/JavaScript opt-in and all other production settings remain
+unchanged. Native application ExecuteScript can bypass page CSP; do not use it as the
+attacker when qualifying script/eval restrictions.
 The [future trust strategy](hybrid-trust-strategy.md) defines unmet whole-realm/platform
 acceptance gates; a local origin, immutable bytes, Source check or document token alone
 must never enable native privileges. Untrusted scripts sharing a reachable main-world

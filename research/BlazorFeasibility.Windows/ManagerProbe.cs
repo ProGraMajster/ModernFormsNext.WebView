@@ -10,6 +10,7 @@ internal sealed class ManagerProbe : WebViewManager
     private readonly Action<Uri> navigate;
     private readonly IWebViewTransport? transport;
     internal int RejectedMessages { get; private set; }
+    internal int RejectedAttachPages { get; private set; }
 
     internal ManagerProbe(IServiceProvider services, Dispatcher dispatcher, ResourceCatalog catalog,
         Action<Uri> navigate, IWebViewTransport? transport = null)
@@ -36,7 +37,13 @@ internal sealed class ManagerProbe : WebViewManager
     {
         // The baseline never authenticates callers. Do not convert informational Source
         // or a token into permission to invoke MessageReceived/Blazor's native dispatch.
-        if (!message.IsOriginAuthenticated) { RejectedMessages = Math.Min(256, RejectedMessages + 1); return; }
+        if (!message.IsOriginAuthenticated)
+        {
+            RejectedMessages = Math.Min(256, RejectedMessages + 1);
+            if (message.Message.StartsWith("__bwv:[\"AttachPage\",", StringComparison.Ordinal))
+                RejectedAttachPages = Math.Min(256, RejectedAttachPages + 1);
+            return;
+        }
         throw new NotSupportedException("A privileged IPC policy has not been qualified.");
     }
     internal void CheckResource(string path)

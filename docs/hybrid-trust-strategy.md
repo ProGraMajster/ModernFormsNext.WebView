@@ -1,5 +1,9 @@
 # Hybrid trust strategy ADR — #10/#15/#17 (2026-10-18)
 
+Delivery update: #43 was normally merged after [fresh final review](pr41-43-final-audit.md).
+The candidate models remain unqualified. The [new catalog policy](local-content-policy.md)
+controls content loading only; it is not the verified realm/native channel proposed here.
+
 ## Decision and scope
 
 **Privileged JavaScript → C# remains NO-GO on both current product adapters.** This ADR
@@ -180,6 +184,10 @@ requires explicit issue acceptance, not closing #15 based on this ADR. Baseline 
 have independent qualification/packaging/approval gates and do not depend on Hybrid.
 
 ## Delivery and validation
+
+The separate [execution-world probe](windows-world-experiment.md) now exercises the
+public SDK in an unprivileged hostile fixture. A measured DOM confused-deputy attack
+preserves the privileged NO-GO; it does not qualify this ADR's whole-app realm.
 
 Separate strategy branch/PR; no runtime/public API/dependency/policy changes in this stage.
 Delivered in open [PR #43](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/43),

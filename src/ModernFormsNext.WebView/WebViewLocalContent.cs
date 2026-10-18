@@ -1,5 +1,3 @@
-using System.Collections.ObjectModel;
-
 namespace ModernFormsNext.WebView;
 
 /// <summary>An immutable, explicitly public collection of application web resources.</summary>
@@ -22,25 +20,22 @@ public sealed class WebViewLocalContent
 {
     private const string HostSuffix = ".mfn-app.invalid";
     private readonly Dictionary<string, (byte[] Data, string Mime)> resources = new(StringComparer.Ordinal);
-    private static readonly IReadOnlyDictionary<string, string> responseHeaders = new ReadOnlyDictionary<string, string>(
-        new Dictionary<string, string>
-        {
-            ["Content-Security-Policy"] = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; " +
-                "connect-src 'none'; frame-src 'none'; worker-src 'none'; object-src 'none'; base-uri 'none'; " +
-                "form-action 'none'; frame-ancestors 'none'",
-            ["X-Content-Type-Options"] = "nosniff",
-            ["X-Frame-Options"] = "DENY",
-            ["Cross-Origin-Resource-Policy"] = "same-origin",
-            ["Cache-Control"] = "no-store",
-            ["Referrer-Policy"] = "no-referrer"
-        });
 
     /// <summary>Copies the allowlisted public resources, inferring MIME from supported extensions.</summary>
     /// <exception cref="ArgumentException">A path, extension, count or size is unsupported.</exception>
     /// <remarks>HTML/CSS/JS/JSON/TXT are UTF-8; PNG/JPEG/GIF/WebP/ICO are binary. SVG is excluded.</remarks>
-    public WebViewLocalContent(IReadOnlyDictionary<string, byte[]> resources)
+    public WebViewLocalContent(IReadOnlyDictionary<string, byte[]> resources) : this(resources, WebViewLocalContentPolicy.Default) { }
+
+    /// <summary>Copies allowlisted public resources and selects their immutable typed CSP policy before navigation.</summary>
+    /// <param name="resources">Public bytes only, copied with the existing path/MIME/count/size limits.</param>
+    /// <param name="policy">Immutable content-loading restrictions; these never grant native privileges.</param>
+    /// <exception cref="ArgumentNullException">Resources or policy is null.</exception>
+    /// <exception cref="ArgumentException">A resource path, extension, count or size is unsupported.</exception>
+    /// <remarks>Nondefault policies require ConfigurableLocalContent adapter support. JavaScript remains a separate WebView setting.</remarks>
+    public WebViewLocalContent(IReadOnlyDictionary<string, byte[]> resources, WebViewLocalContentPolicy policy)
     {
         ArgumentNullException.ThrowIfNull(resources);
+        ArgumentNullException.ThrowIfNull(policy); Policy = policy;
         if (resources.Count is 0 or > 1024) throw new ArgumentException("Supply 1 to 1024 public resources.", nameof(resources));
         int total = 0;
         foreach (var (path, bytes) in resources)
@@ -63,6 +58,10 @@ public sealed class WebViewLocalContent
     /// <summary>Gets this collection's unique HTTPS origin, reserved for intercepted application resources.</summary>
     /// <remarks>The random host isolates collections; it is neither a secret nor sender authentication.</remarks>
     public Uri Origin { get; } = new("https://" + Guid.NewGuid().ToString("N") + HostSuffix + "/");
+
+    /// <summary>Gets the immutable content-loading policy selected at construction.</summary>
+    /// <remarks>To change it, create and navigate to a new catalog. Reload reuses this policy; no authentication is implied.</remarks>
+    public WebViewLocalContentPolicy Policy { get; }
 
     /// <summary>Returns an entry URI for an existing, validated relative resource path.</summary>
     /// <exception cref="ArgumentException">The path is invalid or absent from the collection.</exception>
@@ -90,19 +89,21 @@ public sealed class WebViewLocalContent
         ArgumentNullException.ThrowIfNull(address);
         if (!address.StartsWith(Origin.AbsoluteUri, StringComparison.Ordinal)) return ErrorResponse(404);
         string path = address[Origin.AbsoluteUri.Length..];
-        if (!IsValidPath(path)) return ErrorResponse(400);
-        if (method is not ("GET" or "HEAD")) return ErrorResponse(405);
+        if (!IsValidPath(path)) return DeniedResponse(400);
+        if (method is not ("GET" or "HEAD")) return DeniedResponse(405);
         return resources.TryGetValue(path, out var resource)
-            ? new(200, resource.Mime, method == "HEAD" ? [] : resource.Data, responseHeaders)
-            : ErrorResponse(404);
+            ? new(200, resource.Mime, method == "HEAD" ? [] : resource.Data, Policy.ResponseHeaders)
+            : DeniedResponse(404);
     }
 
     /// <summary>Creates an empty denial response for an inactive or invalid reserved resource request.</summary>
     public static WebViewLocalContentResponse ErrorResponse(int statusCode = 410)
     {
         if (statusCode is not (400 or 404 or 405 or 410)) throw new ArgumentOutOfRangeException(nameof(statusCode));
-        return new(statusCode, "text/plain", [], responseHeaders);
+        return new(statusCode, "text/plain", [], WebViewLocalContentPolicy.Default.ResponseHeaders);
     }
+
+    private WebViewLocalContentResponse DeniedResponse(int statusCode) => new(statusCode, "text/plain", [], Policy.ResponseHeaders);
 
     private static void ValidatePath(string path)
     {

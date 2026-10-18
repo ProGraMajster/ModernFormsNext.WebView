@@ -10,6 +10,7 @@ network policy parity or physical-device qualification.
 | URI navigation | HTTP/HTTPS, about:blank | Implemented | Implemented; app network policy applies |
 | Raw HTML | Null Source, no base option | NavigateToString; native size limit | LoadDataWithBaseURL(null); native history differs |
 | Local public resources | Immutable bytes, isolated HTTPS origin, fixed CSP | Request interception with Document filter; capability false on unsupported runtime | API21+ ShouldInterceptRequest; worker-thread immutable snapshot, minSdk23 |
+| Typed local content policy | Immutable None/Self per catalog; unchanged default, explicit application opt-in | ConfigurableLocalContent only with installed native header interception | Current peer/header API; native provider/CSP floor qualification is separate |
 | Privileged messaging/RPC | Not implemented; fail closed | No authorized handler dispatch | No authorized handler dispatch; AddJavascriptInterface cannot authenticate origin |
 | Baseline authentication metadata | IsOriginAuthenticated always false; original RequestId/PeerGeneration are lifetime correlation | Same-origin frames can invoke parent helper | Opaque frames can invoke annotated string bridge; Source=null |
 | Private packet correlation | Does not authenticate an original script caller | Per-request native token; controlled local Source check; stale ID substitution rejected | Existing original-request string envelope, unchanged |
@@ -66,3 +67,8 @@ The [whole-realm/world strategy](hybrid-trust-strategy.md) is a proposed securit
 not an implemented capability. Current authentication flags stay false; SDK/native frame
 context, CSP and correlation are separate evidence from original-script authorization.
 Separate views do not imply Android cookie/profile or process isolation.
+
+[Typed policy API and effects](local-content-policy.md) are content-loading configuration,
+not authentication. Older adapters retain the default contract and explicitly reject
+nondefault policy without the new optional peer capability. Frame-resource CSP and tested
+inherited inline-script denial do not prove absence of every iframe DOM context.
