@@ -351,6 +351,25 @@ public sealed class WebViewTests
         Assert.Equal(WebViewInitializationState.Detached, f.Browser.InitializationState);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task CancellationWinsOverCoincidentNativeFailure(bool typed)
+    {
+        Task<string> task;
+        using (var f = new Fixture())
+        {
+            f.Ready(); f.Browser.IsJavaScriptEnabled = true; using var caller = new CancellationTokenSource();
+            f.Peer.ScriptStarted = _ =>
+            {
+                caller.Cancel();
+                f.Peer.Script.SetException(typed ? new WebViewOperationException(WebViewErrorCategory.Engine) : new InvalidOperationException("private-native-detail"));
+            };
+            task = f.Browser.ExecuteScriptAsync("value", caller.Token);
+        }
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task);
+    }
+
     [Fact]
     public void PublicSharedSignaturesExposeNoNativeEngineOrHandleTypes()
     {

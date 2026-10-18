@@ -52,3 +52,7 @@ authentication remains NO-GO; no product capability or AndroidX reference is add
 
 Local resource limits, HTTP/MIME/CSP and lifecycle semantics are in [local content](local-content.md).
 Platform qualification and dependency gates are recorded in [phase2-progress](phase2-progress.md).
+
+[#19 error/deadline hardening](issue19-errors-cancellation.md) includes JSON conversion in
+the existing RPC deadline and gives requested cancellation priority over coincident errors.
+This changes no authentication capability and exposes no C# handlers.

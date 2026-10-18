@@ -217,6 +217,7 @@ public class WebView : NativeViewHost
     /// engine's projection: WebView2 can return null while Android may replace cyclic members
     /// with null. Return a JSON-compatible value when portable result semantics are required.
     /// Scripts execute natively; no eval wrapper or page-global helper changes their scope.
+    /// Requested cancellation takes precedence over a coincident engine failure.
     /// </remarks>
     public Task<string> ExecuteScriptAsync(string script, CancellationToken cancellationToken = default)
     {
@@ -250,8 +251,8 @@ public class WebView : NativeViewHost
             return result;
         }
         catch (OperationCanceledException) { throw; }
-        catch (WebViewOperationException) { throw; }
-        catch { throw new WebViewOperationException(WebViewErrorCategory.Engine); }
+        catch (WebViewOperationException) { linked.Token.ThrowIfCancellationRequested(); throw; }
+        catch { linked.Token.ThrowIfCancellationRequested(); throw new WebViewOperationException(WebViewErrorCategory.Engine); }
     }
 
     private void CancelDocumentOperations()

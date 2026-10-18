@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using ModernFormsNext.WindowKit.Threading;
@@ -45,10 +46,14 @@ public sealed class WebViewRpcClient : IDisposable
     /// <param name="request">JSON-compatible request data; do not send secrets to untrusted content.</param>
     /// <param name="requestTypeInfo">Explicit request serialization metadata, normally source-generated.</param>
     /// <param name="responseTypeInfo">Explicit response metadata; conversion is not authorization.</param>
-    /// <param name="timeout">Total deadline including submission, 1–120000 milliseconds; null uses 10000.</param>
+    /// <param name="timeout">Total local deadline including JSON conversion and submission, 1–120000 milliseconds; null uses 10000.</param>
     /// <param name="cancellationToken">Cancels the local wait; cancellation cannot undo submitted JavaScript effects.</param>
     /// <returns>The typed response, or cancellation/sanitized WebViewRpcException.</returns>
-    /// <remarks>UI-thread entry. Requires a successfully completed, JS-enabled document and explicit endpoint installation.</remarks>
+    /// <remarks>
+    /// UI-thread entry. Requires a successfully completed, JS-enabled document and explicit endpoint installation.
+    /// Synchronous converters cannot be interrupted: their elapsed time consumes the deadline and is checked
+    /// before submission/return. Cancellation takes precedence over a coincident converter or engine failure.
+    /// </remarks>
     public Task<TResponse?> InvokeAsync<TRequest, TResponse>(string method, TRequest request,
         JsonTypeInfo<TRequest> requestTypeInfo, JsonTypeInfo<TResponse> responseTypeInfo,
         TimeSpan? timeout = null, CancellationToken cancellationToken = default)
@@ -69,51 +74,68 @@ public sealed class WebViewRpcClient : IDisposable
         JsonTypeInfo<TRequest> requestTypeInfo, JsonTypeInfo<TResponse> responseTypeInfo,
         WebViewDocumentContext document, int timeout, CancellationToken caller)
     {
-        using var deadline = new CancellationTokenSource();
+        long started = Stopwatch.GetTimestamp();
+        using var deadline = new CancellationTokenSource(timeout);
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(caller, document.CancellationToken, transportToken, lifetimeToken, deadline.Token);
-        linked.Token.ThrowIfCancellationRequested();
         string id = Guid.NewGuid().ToString("N"), documentId = WebViewRpcProtocol.DocumentId(document), message;
-        try { message = WebViewRpcProtocol.Request(id, documentId, method, JsonSerializer.SerializeToElement(request, requestTypeInfo), timeout); }
-        catch (WebViewRpcException) { linked.Token.ThrowIfCancellationRequested(); throw; }
-        catch { linked.Token.ThrowIfCancellationRequested(); throw new WebViewRpcException(WebViewRpcErrorCategory.InvalidPayload); }
-        var completion = new TaskCompletionSource<WebViewRpcProtocol.Reply>(TaskCreationOptions.RunContinuationsAsynchronously);
-        lock (sync)
+        bool registered = false, submitted = false, canceled = false;
+        void CheckActive()
         {
-            if (pending.Count >= WebViewRpcProtocol.MaxPendingRequests) throw new InvalidOperationException("RPC pending request limit reached.");
-            pending.Add(id, new(document, completion));
+            linked.Token.ThrowIfCancellationRequested();
+            // Timers cannot preempt a synchronous application converter and may dispatch
+            // late under thread-pool pressure. Measure elapsed time as well; never send
+            // an expired request or return a result that finished after its deadline.
+            if (Stopwatch.GetElapsedTime(started).TotalMilliseconds >= timeout)
+                throw new OperationCanceledException(linked.Token);
         }
-        bool submitted = false, canceled = false;
-        deadline.CancelAfter(timeout);
         try
         {
+            CheckActive();
+            try
+            {
+                var payload = JsonSerializer.SerializeToElement(request, requestTypeInfo);
+                CheckActive(); // A converter can reenter, navigate, cancel or dispose.
+                int remaining = (int)Math.Clamp(Math.Ceiling(timeout - Stopwatch.GetElapsedTime(started).TotalMilliseconds), 1, timeout);
+                message = WebViewRpcProtocol.Request(id, documentId, method, payload, remaining);
+            }
+            catch (WebViewRpcException) { CheckActive(); throw; }
+            catch { CheckActive(); throw new WebViewRpcException(WebViewRpcErrorCategory.InvalidPayload); }
+            CheckActive();
+            var completion = new TaskCompletionSource<WebViewRpcProtocol.Reply>(TaskCreationOptions.RunContinuationsAsynchronously);
+            lock (sync)
+            {
+                if (pending.Count >= WebViewRpcProtocol.MaxPendingRequests) throw new InvalidOperationException("RPC pending request limit reached.");
+                pending.Add(id, new(document, completion)); registered = true;
+            }
             try
             {
                 submitted = true; // The native operation may have effects even if submission later fails.
                 await transport.PostMessageAsync(message, linked.Token).WaitAsync(linked.Token).ConfigureAwait(false);
             }
             catch (OperationCanceledException) { throw; }
-            catch { throw new WebViewRpcException(WebViewRpcErrorCategory.Transport); }
+            catch { CheckActive(); throw new WebViewRpcException(WebViewRpcErrorCategory.Transport); }
             var reply = await completion.Task.WaitAsync(linked.Token).ConfigureAwait(false);
-            linked.Token.ThrowIfCancellationRequested();
+            CheckActive();
             if (reply.Error is { } code)
                 throw new WebViewRpcException(code == "timeout" ? WebViewRpcErrorCategory.Timeout : WebViewRpcErrorCategory.RemoteError) { RemoteCode = code };
             TResponse? value;
             try { value = JsonSerializer.Deserialize(reply.Payload, responseTypeInfo); }
-            catch { linked.Token.ThrowIfCancellationRequested(); throw new WebViewRpcException(WebViewRpcErrorCategory.InvalidResponse); }
-            linked.Token.ThrowIfCancellationRequested();
+            catch { CheckActive(); throw new WebViewRpcException(WebViewRpcErrorCategory.InvalidResponse); }
+            CheckActive();
             return value;
         }
         catch (OperationCanceledException)
         {
             canceled = true;
-            if (deadline.IsCancellationRequested && !caller.IsCancellationRequested && !document.CancellationToken.IsCancellationRequested &&
+            if ((deadline.IsCancellationRequested || Stopwatch.GetElapsedTime(started).TotalMilliseconds >= timeout) &&
+                !caller.IsCancellationRequested && !document.CancellationToken.IsCancellationRequested &&
                 !transportToken.IsCancellationRequested && !lifetimeToken.IsCancellationRequested)
                 throw new WebViewRpcException(WebViewRpcErrorCategory.Timeout);
             throw;
         }
         finally
         {
-            lock (sync) pending.Remove(id);
+            if (registered) { lock (sync) pending.Remove(id); }
             if (submitted && canceled) QueueCancellation(id, document, documentId);
         }
     }

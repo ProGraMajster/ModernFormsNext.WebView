@@ -32,8 +32,20 @@ internal static class Program
                 using var second = new ModernFormsNext.Form { UseSystemDecorations = true };
                 second.Show();
                 await RuntimeValidation.NavigateAsync(form.Browser, () => form.Browser.NavigateToLocalContent(LocalContentSample.Create()));
+                using var reparentTransport = new ModernFormsNext.WebView.WebViewTransport(form.Browser);
+                using var reparentRpc = new ModernFormsNext.WebView.WebViewRpcClient(reparentTransport);
+                await reparentTransport.ExecuteScriptAsync(ModernFormsNext.WebView.WebViewRpcProtocol.JavaScript);
+                await reparentTransport.ExecuteScriptAsync("modernFormsRpc.register('never',()=>new Promise(()=>{}));null");
+                var retiredRpcCall = reparentRpc.InvokeAsync("never", 0, RpcSampleJson.Default.Int32, RpcSampleJson.Default.Int32);
                 long before = form.Browser.GetDiagnostics().PeerGeneration;
                 await RuntimeValidation.NavigateAsync(form.Browser, () => second.Controls.Add(form.Browser));
+                try { await retiredRpcCall; throw new InvalidOperationException("Expected RPC cancellation on native reparent."); }
+                catch (OperationCanceledException) { }
+                await reparentTransport.ExecuteScriptAsync(ModernFormsNext.WebView.WebViewRpcProtocol.JavaScript);
+                await reparentTransport.ExecuteScriptAsync("modernFormsRpc.register('echo',()=>42);null");
+                RuntimeValidation.Require(await reparentRpc.InvokeAsync("echo", 0, RpcSampleJson.Default.Int32, RpcSampleJson.Default.Int32) == 42,
+                    "same RPC client recovers after real native host recreation and explicit endpoint installation");
+                Console.WriteLine("PASS pending RPC canceled by real cross-window host retirement + same-client recovery");
                 RuntimeValidation.Require(form.Browser.GetDiagnostics().PeerGeneration > before, "cross-window peer recreated");
                 RuntimeValidation.Require(!form.Browser.CanGoBack && !form.Browser.CanGoForward, "recreation resets browser history");
                 await RuntimeValidation.NavigateAsync(form.Browser, () =>

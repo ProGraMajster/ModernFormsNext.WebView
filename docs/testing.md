@@ -70,6 +70,10 @@ Windows also captures an actual old private message, reloads the same origin, an
 that replacing only its public request ID cannot deliver it. A positively received current
 message fences the negative assertions; guessed/legacy packets and post-revocation recovery
 are covered. [#15](issue15-windows-message-hardening.md) documents the authentication limit.
+Both samples run the [#19 RPC failure/lifetime matrix](issue19-errors-cancellation.md),
+including serialization deadline/no page invocation, conversion/rejection, parallel cancel,
+Stop/JS-disable/reload and borrowed wrapper disposal. Windows cancels pending RPC across
+real cross-window native-host recreation and proves recovery with the same client.
 Failure returns exit code 1. The failure fixture temporarily sets the SDK-supported process-local
 WEBVIEW2_BROWSER_EXECUTABLE_FOLDER to a nonexistent fixed-version directory, then restores its
 previous value in finally. It does not alter the installed runtime or use an invalid profile
