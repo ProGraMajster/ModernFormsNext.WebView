@@ -24,6 +24,7 @@ consumes it without defining another hosting or platform service system.
 - [Conversion deadlines and cancellation (#19)](issue19-errors-cancellation.md)
 - [Executable .NET 10 Razor/Blazor feasibility and NO-GO ADR (#22)](issue22-blazor-feasibility.md)
 - [Explicit application-policy Blazor assets vs authorized IPC experiment](blazor-application-policy.md)
+- [Bounded Windows execution-world diagnostic experiment](windows-world-experiment.md)
 - [Current four-stage Phase 2 maturity report](phase2-maturity-report.md)
 - [PR #35 final audit and merge](pr35-final-audit.md)
 - [Phase 2 progress, dependency and release gates](phase2-progress.md)
