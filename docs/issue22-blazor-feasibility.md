@@ -149,3 +149,10 @@ their own profiles. Two early OS Temp fixture directories remain: automatic appr
 rejected their manual deletion with "blocked by policy" and no further reason. No alternate
 deletion API was used. Two early failed artifact profiles are retained as diagnostics.
 This is not retained-heap leak proof.
+
+## Delivery
+
+Open [PR #42](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/42), implementation
+`72a3aa0`, based on verified #41 for sequential review. It remains open; no auto-closure
+or permission to implement #23–#31. Exact final delivery HEAD and hosted CI are recorded
+in the PR separately from local runtime evidence above.
