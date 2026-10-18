@@ -126,7 +126,8 @@ This result was verified before starting the dependent #46 increment.
 
 ## One implemented #46 increment
 
-The separate navigation-scheme branch is based on final #51; both new PRs remain OPEN.
+The separate [navigation-scheme PR52](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/52)
+is based on final #51; both new PRs remain OPEN.
 WebView.AllowedNavigationSchemes is per-instance UI-thread state with flags None=0,
 Http=1, Https=2, AboutBlank=4, Default=7. Default/static ValidateUri/CSP bytes and old
 IWebViewPeer/settings/request constructors remain compatible. App URI checks run before
@@ -156,7 +157,33 @@ HTTPS catalog and POST fallback. Windows additionally passed owned HTTP302 and a
 cross-window policy/capability/RPC recovery. Initial fixture raw-string compilation
 errors and an immediate Task.IsCanceled timing assumption were corrected; final async
 assertion awaits bounded cancellation settlement, without skips or policy relaxation.
-Release/full comparison/final CI are recorded once completed, not assumed PASS.
+The committed implementation is ba85b6387685e82d731884d5987e794e9cbb8a9e. Full
+current-master restore/sequential Debug/Release292/292 and native Windows/API34 both
+configurations passed, zero warnings/errors/skips (artifacts/navigation-final-current).
+Exact-head [push39148012175](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39148012175)
+and [PR39148093526](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39148093526)
+are terminal SUCCESS in all six jobs each. Historical69c5ea2 full restore/Debug/Release292/292
+and native Windows/API34 both configurations also passed, zero warnings/errors/skips
+(artifacts/navigation-final-historical). Subsequent report/platform-guide edits change no
+compiled source; final delivered SHA/terminal CI are recorded in the PR description.
+
+All four updated external source consumers passed restore/Debug/Release, with warnings
+treated as errors; Windows headless execution confirms Core/all native loaders/no UI
+wrappers. They compile the new public enum/optional interface as well as old contracts.
+Evidence under artifacts/source-consumers: CurrentMaster Windows1420ba7662454bedbe6168622d18418e,
+Androiddc84097e4e584f6480506eb5a723f728; HistoricalBaseline Windows6aa542f82c894859867f2d63f5dfcdf3,
+Androidc97e94a9375245f3987ee837c51ee328. Results identify ba85b638 and dirty=true because
+only platform/report Markdown edits were in progress; compiled product sources matched
+that implementation commit. Exact-head hosted CI uses clean explicit head checkouts.
+
+Fresh current7cfa Blazor Debug/Release builds/contracts, native Default/Application modes
+and profile cleanup passed (artifacts/navigation-blazor-current). Real AttachPage remains
+rejected, TryDispatch false, no managed page or privileged DI scope. Fresh current7cfa
+world Debug/Release build/native/profile cleanup passed (artifacts/navigation-world-current):
+positive real actor controls, DOM confused-deputy counterexample, live Stop and recorded
+packet rejection, actual302, same-URI reload and real host/context recreation. These
+research execution passes preserve interactive/privileged NO-GO. This is regression of
+existing fixtures, not implementation of the new planned trust experiment.
 
 Android POST may already have network effects. Android cross-scheme HTTP302 is NOT RUN
 (cleartext manifest retained); reported redirect unit coverage does not qualify all native
@@ -209,7 +236,7 @@ tag alone is insufficient. See baseline-preview-readiness.md for the concrete ga
 
 ## Available evidence and missing qualification
 
-Environment: Windows host; SDK10.0.401; WebView2 SDK1.0.4258.31/runtime155.0.4283.62;
+Environment: Windows x64 host; SDK10.0.401; WebView2 SDK1.0.4258.31/runtime155.0.4283.62;
 JDK21.0.8; Android SDK/build tools36; emulator-5554 only, API34/x86_64,
 com.google.android.webview113.0.5672.136. No physical device or unrelated process/profile.
 Builds are sequential with -m:1, UseSharedCompilation=false, GeneratePackageOnBuild=false.
@@ -221,6 +248,8 @@ IME/DPI/accessibility, Designer integration, retained Activity/native/managed he
 full trim/AOT release qualification: NOT RUN. Fifty leases do not prove leak freedom;
 API34 does not prove API23. Hosted CI/headless checks are not native QA.
 Official1.12.0 package compatibility: NOT RUN until actual artifacts exist.
+Windows x86/arm64 native execution and other Android ABIs: NOT RUN; copied loader files
+are an asset check, not execution on those architectures.
 
 Repeatable product commands (then repeat using HistoricalBaseline with its matching root):
 
@@ -233,7 +262,8 @@ Repeatable product commands (then repeat using HistoricalBaseline with its match
     adb -s emulator-5554 install -r ./samples/ModernFormsNext.WebView.Sample.Android/bin/Debug/net10.0-android/com.programajster.modernformsnext.webview.sample-Signed.apk
     adb -s emulator-5554 shell am force-stop com.programajster.modernformsnext.webview.sample
     adb -s emulator-5554 shell am start -n com.programajster.modernformsnext.webview.sample/.MainActivity --ez validate true
-    adb -s emulator-5554 logcat -d --pid=SELECTED_SAMPLE_PID -s MFNWebView:I
+    $samplePid = adb -s emulator-5554 shell pidof -s com.programajster.modernformsnext.webview.sample
+    adb -s emulator-5554 logcat -d --pid=$samplePid -s MFNWebView:I
     ./scripts/test-source-consumer.ps1 -Snapshot CurrentMaster -Platform Windows -FrameworkRoot $framework
     ./scripts/test-source-consumer.ps1 -Snapshot CurrentMaster -Platform Android -FrameworkRoot $framework -JavaSdkDirectory $env:JAVA_HOME
 
@@ -244,9 +274,22 @@ with the same source properties, then each Validate.ps1 -Configuration Debug/Rel
 Blazor also runs --validate-contracts. Research is outside the product solution and adds
 no product ASP.NET/AndroidX dependency.
 
+Research command details (repeat with Release):
+
+    dotnet build ./research/BlazorFeasibility.Windows -c Debug -m:1 -p:UseSharedCompilation=false -p:GeneratePackageOnBuild=false -p:ModernFormsNextSourceRoot=$framework
+    dotnet run --project ./research/BlazorFeasibility.Windows -c Debug --no-build -- --validate-contracts
+    ./research/BlazorFeasibility.Windows/Validate.ps1 -Configuration Debug
+    ./research/BlazorFeasibility.Windows/Validate.ps1 -Configuration Debug -ApplicationPolicy
+    dotnet build ./research/WindowsWorldProbe -c Debug -m:1 -p:UseSharedCompilation=false -p:GeneratePackageOnBuild=false -p:ModernFormsNextSourceRoot=$framework
+    ./research/WindowsWorldProbe/Validate.ps1 -Configuration Debug
+
+Native wrappers wait for their owned process trees and verify test-profile cleanup.
+The final PR description records the delivered docs-only HEAD/CI separately from the
+compiled implementation SHA. No template was changed; template verification was not needed.
+
 ## Next actions, in dependency order
 
-1. Review #51, then the dependent single-feature #46 PR and their exact-head CI/native
+1. Review #51, then dependent #52 (the single #46 feature) and their exact-head CI/native
    evidence. Both stay OPEN for the owner's decision; requalify after any later edits.
 2. Complete missing baseline API23/physical/provider and Windows foreground/manual,
    IME/DPI/accessibility/Designer/heap/release-mode qualification before claiming support.
