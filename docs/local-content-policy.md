@@ -166,11 +166,8 @@ application-policy product Activity recreation, full trimming/NativeAOT runtime 
 privileged transport/realm/world. API34 is not evidence for API23. Native effects here
 qualify the listed engines, not a universal network sandbox or future provider versions.
 
-Deterministic and native evidence, final PR/HEAD/CI and engine versions are recorded with
-delivery after execution. Required tests include exact default compatibility, all five
-selectors and invalid values, immutable headers/errors/HEAD, authorities/ports/paths/MIME/
-methods, independent catalogs/instances, unsupported ready/queued/replayed peers, canonical
-document replacement/cancellation and current-policy-only recovery. Native tests must
-positively observe self fetch/base success and default/foreign/frame/script/CSP-meta
-denials with working controls. The separate Blazor experiment must distinguish assets
-startup from authorized IPC/interactivity. No full #23–#31 is authorized by this ADR.
+Delivered in open [PR #47](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/47),
+implementation `599c9e5`, based on normally merged main `b9a5c5e`. The final delivery HEAD
+and terminal hosted CI are recorded on the PR independently of the local native evidence.
+This PR must not merge automatically. The next separate Blazor experiment must distinguish
+assets startup from authorized IPC/interactivity; no full #23–#31 is authorized by this ADR.

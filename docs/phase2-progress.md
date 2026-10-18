@@ -14,6 +14,13 @@ Delivery and final QA are recorded with its separate PR. The older states below,
 then-open #41–#43, are historical. Controlled Blazor assets are a separate next experiment;
 successful self fetch/base alone does not approve renderer/DI/interop attachment.
 
+Policy delivery: open [PR #47](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/47),
+implementation `599c9e5`; full Debug/Release **245/245 each**, zero warnings/errors/skips.
+Windows and Android native PASS both configurations, including actual policy effects,
+working raw frame controls, typed rejection/lifetime recovery and Windows native host replay.
+The five selectors and explicit preset grant no native privilege. Exact final-head hosted
+CI is recorded separately on the PR before the next experiment.
+
 #39 → #40 were finally audited, freshly qualified and normally merged into main
 `b329da3eb114f9cd713b60feffe7242b22c0f0e1`; [post-merge CI](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39053637461)
 is SUCCESS. [Merge report](pr39-40-final-audit.md) has every SHA/CI/result. #15 stays
