@@ -7,10 +7,14 @@ using Browser = global::Android.Webkit.WebView;
 
 namespace ModernFormsNext.WebView.Android;
 
-internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPeerClient client) : IWebViewPeer, IWebViewLocalContentPolicyPeer
+internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPeerClient client) : IWebViewPeer, IWebViewLocalContentPolicyPeer, IWebViewNavigationFilterPeer
 {
     public bool SupportsLocalContent => Current && view is not null;
     public bool SupportsLocalContentPolicy => SupportsLocalContent;
+    // API23's legacy string callback has no main-frame metadata. Keep its original
+    // default behavior but explicitly refuse the new opt-in instead of claiming parity.
+    public bool SupportsNavigationSchemeFiltering => Current && view is not null &&
+        navigationClient is not null && OperatingSystem.IsAndroidVersionAtLeast(24);
     private readonly IWebViewPeerClient callbacks = client;
     private Browser? view;
     private AndroidViewPeer? attachment;

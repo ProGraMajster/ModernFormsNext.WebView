@@ -27,6 +27,11 @@ Application opt-in permits same-origin connections/base URI for reviewed public 
 it enables no C# handlers or authenticated messaging. Both samples expose a **Local fetch
 opt-in** example. Broader platform controls remain separate future work.
 
+The [per-view scheme filter](docs/navigation-scheme-filter.md) restricts app URI commands
+and reported main-frame navigation. Default behavior is unchanged; native detection
+requires initialized Windows hooks or Android API24+. POST/subresources are outside a
+complete network boundary. No selection authenticates page-to-C# messages.
+
 The isolated [Blazor application-policy experiment](docs/blazor-application-policy.md)
 tests original .NET10 asset startup separately from authorized IPC. No interactive
 Blazor host or privileged handler is enabled.

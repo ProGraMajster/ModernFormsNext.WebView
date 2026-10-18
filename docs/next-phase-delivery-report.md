@@ -117,6 +117,87 @@ The [development PR51](https://github.com/ProGraMajster/ModernFormsNext.WebView/
 remains OPEN against main; its final delivered SHA/terminal CI are recorded in the PR
 description after the last report commit. No new PR is automatically merged.
 
+Final #51 delivery:4c76107097344fa9f27ffa6b0a3b74068f5ed396. Both exact-head
+[push39146423726](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39146423726)
+and [PR39146427487](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39146427487)
+are terminal SUCCESS in all six jobs. The final clean-head Windows consumer also passed
+Debug/Release and recorded dirty=false (artifacts/source-consumers/207792861fc84c00abbd641d4d55f0b9).
+This result was verified before starting the dependent #46 increment.
+
+## One implemented #46 increment
+
+The separate navigation-scheme branch is based on final #51; both new PRs remain OPEN.
+WebView.AllowedNavigationSchemes is per-instance UI-thread state with flags None=0,
+Http=1, Https=2, AboutBlank=4, Default=7. Default/static ValidateUri/CSP bytes and old
+IWebViewPeer/settings/request constructors remain compatible. App URI checks run before
+native submission/token mutation; reported top-level violations precede public Starting,
+raise InvalidAddress and cancel document operations. Changed settings use existing Stop/
+request IDs/lifetime and survive native recreation. No extra host/focus/history/counter.
+
+Optional IWebViewNavigationFilterPeer detects installed hooks through capability
+NavigationSchemeFiltering: initialized Windows Core, Android API24+ active main-frame
+client; API23/older peers reject the nondefault option explicitly. Unsupported queued
+loads fail Engine without submission, ready changes/loads throw NotSupportedException,
+Reload/history return false. Default remains compatible. Raw HTML is separate, so None
+is not offline mode. Local catalog origin/CSP remains conjunctive. Re-enabling Http is
+an explicit higher-risk choice subject to OS cleartext/TLS rules. Complete option docs,
+safe/risky examples, future-control inventory and native matrix:
+[navigation-scheme-filter.md](navigation-scheme-filter.md).
+
+The implementation also fixes existing cancellation reentrancy at Submit/Stop/history/
+native-begin boundaries: only the captured canonical request may overwrite/stop/settle;
+callbacks submitting newer work win. Stop still executes cleanup when cancellation code
+throws. No new lifecycle identity or global setting is introduced.
+
+Debug deterministic243/243 shared tests passed, including47 added cases; original
+37 Windows/12 Android give292/292 overall. Native Debug Windows and API34 passed real
+main/same/opaque actors, typed callback denial, Stop/raw reload, None/raw distinction,
+HTTPS catalog and POST fallback. Windows additionally passed owned HTTP302 and actual
+cross-window policy/capability/RPC recovery. Initial fixture raw-string compilation
+errors and an immediate Task.IsCanceled timing assumption were corrected; final async
+assertion awaits bounded cancellation settlement, without skips or policy relaxation.
+Release/full comparison/final CI are recorded once completed, not assumed PASS.
+
+Android POST may already have network effects. Android cross-scheme HTTP302 is NOT RUN
+(cleartext manifest retained); reported redirect unit coverage does not qualify all native
+redirects/providers. API23 runtime/control branch, physical devices and Android product
+Activity recreation remain NOT RUN. Scheme choice never authenticates a caller;
+IsOriginAuthenticated=false and absent AuthenticatedMessaging/privileged handlers remain.
+
+## One next trust experiment: plan only
+
+No additional research implementation is claimed. Blazor original assets/start can load
+under explicit Application CSP, but real AttachPage remains unauthorized/rejected and
+interactive/privileged DI/IPC remains NO-GO. Isolated-world binding separation alone
+failed the whole-realm argument because shared DOM can act as a confused deputy.
+Android AddJavascriptInterface never authenticates the original caller.
+
+The next bounded experiment is a Windows closed-program realm with an app-owned,
+one-use permit for a diagnostic IncrementOwnedCounter(delta=1) operation. It may not
+touch files/network/DI or add production handlers. The only positive invocation comes
+from a native app action with a permit bound to current canonical peer/document,
+operation/arguments and the engine-reported execution context. Merely possessing a
+binding, URL, public request ID or context label is insufficient.
+
+Before running it, audit the entire trusted program/call graph: no DOM read, DOM event,
+page-controlled callback/prototype/object, message or page-derived argument may influence
+the authorized call. Use engine-created/context-attributed execution and clear permits
+on document/context destruction, Stop, JS disable, recreation and disposal. Fail closed
+if context/lifetime attribution or program closure cannot be demonstrated.
+
+Attacker controls page main/same-origin/opaque frames, shared DOM and all page messages.
+Positive control: one app-authorized exact operation increments once. Negative controls:
+direct page binding attempts, DOM deputy commands, forged/wrong-context packets, wrong
+operation/arguments, replay/duplicate permit, stale document/context, redirect/same-URI
+reload, Stop/JS-disable/recreate/dispose. Each actor must positively execute, each rejected
+call leave the counter unchanged, then a fresh authorized positive call must still work.
+Keep provenance logs and distinguish live callbacks from deliberately replayed records.
+
+Decision today: NOT RUN/NO-GO until closure and operation authorization are proven.
+Even a passing diagnostic counter would qualify only that host-initiated experiment,
+not original Blazor AttachPage or general page-to-C# IPC. Actual research needs a
+separate project/PR. #15 stays OPEN/PARTIAL, #17/#13/#18 BLOCKED, #23–#31 incomplete.
+
 The expected negative official1.11.1 control proves only that old packages lack these
 new hosting contracts; it is not a bug, patch-release request or development blocker.
 The explicit-version official probe is retained unchanged. After actual1.12.0 publication,
@@ -165,8 +246,8 @@ no product ASP.NET/AndroidX dependency.
 
 ## Next actions, in dependency order
 
-1. Review the development snapshot/consumer PR and its exact-head CI; then qualify the
-   single #46 navigation increment in its own dependent PR without automatic merge.
+1. Review #51, then the dependent single-feature #46 PR and their exact-head CI/native
+   evidence. Both stay OPEN for the owner's decision; requalify after any later edits.
 2. Complete missing baseline API23/physical/provider and Windows foreground/manual,
    IME/DPI/accessibility/Designer/heap/release-mode qualification before claiming support.
 3. After actual official1.12.0 publication, verify and align package-only/API-ABI/native

@@ -13,6 +13,13 @@ NativeViewHost remains the canonical control boundary.
 
 ## Source and HTML
 
+AllowedNavigationSchemes adds an instance subset of the original policy:
+Default = Http | Https | AboutBlank. NavigationSchemeFiltering detects installed native
+hooks after readiness; Android requires API24+ and explicitly rejects the opt-in on API23.
+Changing this runtime-only property uses canonical Stop/lifetime revocation, without
+automatic unload/reload or layout. See [precise scheme semantics](navigation-scheme-filter.md)
+for exceptions, unsupported peers, raw/local content, native limits and examples.
+
 - Before or during initialization, only the latest requested URI/HTML is retained.
 - Same-URI Source assignment is a no-op. `Navigate(uri)` repeats intentionally.
 - Source is the requested URI, then the final redirected/current URI after engine callbacks.

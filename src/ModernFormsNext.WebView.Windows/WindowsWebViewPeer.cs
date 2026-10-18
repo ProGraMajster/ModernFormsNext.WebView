@@ -7,7 +7,7 @@ using ModernFormsNext.WindowKit.Threading;
 namespace ModernFormsNext.WebView.Windows;
 
 internal sealed class WindowsWebViewPeer(WindowsWebViewProvider provider, WindowsNativeViewSite site,
-    IWebViewPeerClient client) : IWebViewPeer, IWebViewLocalContentPolicyPeer
+    IWebViewPeerClient client) : IWebViewPeer, IWebViewLocalContentPolicyPeer, IWebViewNavigationFilterPeer
 {
     private CoreWebView2Controller? controller;
     private CoreWebView2? core;
@@ -24,6 +24,8 @@ internal sealed class WindowsWebViewPeer(WindowsWebViewProvider provider, Window
     private readonly WindowsMessageGuard messages = new();
     public bool SupportsLocalContent { get; private set; }
     public bool SupportsLocalContentPolicy => SupportsLocalContent;
+    // Subscribe must complete before Initialized is reported; no capability survives CloseController.
+    public bool SupportsNavigationSchemeFiltering => Current && core is not null;
     private bool Current => !disposed && site.IsCurrent && client.IsCurrent;
 
     private const string BridgeScript =

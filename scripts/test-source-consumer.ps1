@@ -58,12 +58,14 @@ internal static class SourceContractProbe
         typeof(Form), typeof(NativeViewHost), typeof(INativeViewFactory),
         typeof(__PLATFORM__NativeViewSite), typeof(__PLATFORM__WebViewProvider),
         typeof(WebView), typeof(WebViewTransport), typeof(WebViewRpcClient),
-        typeof(WebViewLocalContent), typeof(WebViewLocalContentPolicy)
+        typeof(WebViewLocalContent), typeof(WebViewLocalContentPolicy),
+        typeof(WebViewNavigationSchemes), typeof(IWebViewNavigationFilterPeer)
     ];
     private static void Main()
     {
         IWebViewPeerFactoryProvider provider = new __PLATFORM__WebViewProvider();
-        if (Contracts.Length != 10 || WebViewLocalContentPolicy.Default.Scripts != WebViewLocalContentSource.Self ||
+        if (Contracts.Length != 12 || WebViewNavigationSchemes.Default != (WebViewNavigationSchemes)7 ||
+            WebViewLocalContentPolicy.Default.Scripts != WebViewLocalContentSource.Self ||
             provider is null)
             throw new InvalidOperationException("Public contract smoke failed.");
         Console.WriteLine("SOURCE CONSUMER CONTRACT PASS (headless; no native engine)");

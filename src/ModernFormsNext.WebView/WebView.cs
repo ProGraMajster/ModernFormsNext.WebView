@@ -17,7 +17,7 @@ namespace ModernFormsNext.WebView;
 /// var browser = new WebView { Dock = DockStyle.Fill, Source = new Uri("https://example.com") };
 /// form.Controls.Add(browser);
 /// </code></example>
-public class WebView : NativeViewHost
+public partial class WebView : NativeViewHost
 {
     private readonly IWebViewPeerFactoryProvider? explicitProvider;
     private Lease? lease;
@@ -51,7 +51,7 @@ public class WebView : NativeViewHost
     public Uri? Source
     {
         get => source;
-        set { VerifyAccess(); ValidateUri(value); if (source == value && requested?.Html is null) return; Navigate(value); }
+        set { VerifyAccess(); ValidateNavigationUri(value); if (source == value && requested?.Html is null) return; Navigate(value); }
     }
 
     /// <summary>Gets or sets the URI text for the Designer's safe primitive serialization path.</summary>
@@ -87,7 +87,8 @@ public class WebView : NativeViewHost
         WebViewCapabilities.Messaging | WebViewCapabilities.NavigationCancellation | WebViewCapabilities.UserAgent |
         (lease?.Peer is IWebViewLocalContentPeer { SupportsLocalContent: true } ? WebViewCapabilities.LocalContent : WebViewCapabilities.None) |
         (lease?.Peer is IWebViewLocalContentPolicyPeer { SupportsLocalContent: true, SupportsLocalContentPolicy: true }
-            ? WebViewCapabilities.ConfigurableLocalContent : WebViewCapabilities.None) : WebViewCapabilities.None;
+            ? WebViewCapabilities.ConfigurableLocalContent : WebViewCapabilities.None) |
+        (HasNavigationSchemeFiltering ? WebViewCapabilities.NavigationSchemeFiltering : WebViewCapabilities.None) : WebViewCapabilities.None;
 
     /// <summary>Gets or enables JavaScript and the minimal string bridge; defaults to false.</summary>
     /// <remarks>UI thread only. Disabling cancels outstanding scripts/messages. Page code is untrusted.</remarks>
@@ -143,10 +144,10 @@ public class WebView : NativeViewHost
     }
 
     /// <summary>Requests a URI, including a repeated URI; null requests about:blank.</summary>
-    /// <remarks>UI thread only. Supports absolute HTTP/HTTPS and about:blank; other schemes are rejected.</remarks>
+    /// <remarks>UI thread only. Absolute HTTP/HTTPS and about:blank must also pass AllowedNavigationSchemes; other schemes are rejected.</remarks>
     public void Navigate(Uri? uri)
     {
-        VerifyAccess(); ValidateUri(uri);
+        VerifyAccess(); ValidateNavigationUri(uri); EnsureNavigationSchemeSupport();
         Submit(new(++requestId, uri, null));
     }
 
@@ -154,7 +155,7 @@ public class WebView : NativeViewHost
     /// <remarks>UI thread only. Browser history behavior is engine-specific. Recreation replays the HTML.</remarks>
     public void NavigateToHtml(string html)
     {
-        VerifyAccess(); ArgumentNullException.ThrowIfNull(html);
+        VerifyAccess(); ArgumentNullException.ThrowIfNull(html); EnsureNavigationSchemeSupport();
         Submit(new(++requestId, null, html));
     }
 
@@ -171,6 +172,7 @@ public class WebView : NativeViewHost
     {
         VerifyAccess(); ArgumentNullException.ThrowIfNull(content);
         Uri uri = content.GetUri(entryPath);
+        ValidateNavigationUri(uri); EnsureNavigationSchemeSupport();
         if (IsInitialized && !CanLoadLocalContent(content))
             throw new NotSupportedException("This browser does not support the selected local-content policy.");
         Submit(new(++requestId, uri, null) { LocalContent = content });
@@ -182,36 +184,56 @@ public class WebView : NativeViewHost
 
     private void Submit(WebViewNavigationRequest request)
     {
-        CancelDocumentOperations(); requested = request; source = request.Uri; isLoading = false;
+        CancelDocumentOperations();
+        if (request.Id != requestId) return;
+        requested = request; source = request.Uri; isLoading = false;
         StateChanged?.Invoke(this, EventArgs.Empty);
         if (request.Id == requestId && IsInitialized) lease?.Peer.Navigate(request);
     }
 
     /// <summary>Goes back on the UI thread; returns false while loading or without an active history entry.</summary>
-    public bool GoBack() { VerifyAccess(); if (!IsInitialized || isLoading || !canGoBack) return false; NewCommand(false); lease?.Peer.GoBack(requestId); return true; }
+    public bool GoBack() { VerifyAccess(); if (!IsInitialized || isLoading || !canGoBack || !CanApplyNavigationSchemes || !NewCommand(false)) return false; lease?.Peer.GoBack(requestId); return true; }
     /// <summary>Goes forward on the UI thread; returns false while loading or without an active history entry.</summary>
-    public bool GoForward() { VerifyAccess(); if (!IsInitialized || isLoading || !canGoForward) return false; NewCommand(false); lease?.Peer.GoForward(requestId); return true; }
+    public bool GoForward() { VerifyAccess(); if (!IsInitialized || isLoading || !canGoForward || !CanApplyNavigationSchemes || !NewCommand(false)) return false; lease?.Peer.GoForward(requestId); return true; }
     /// <summary>Reloads on the UI thread; returns false while loading, detached or without a logical page.</summary>
     public bool Reload()
     {
         VerifyAccess(); if (!IsInitialized || isLoading || requested is null) return false;
+        if (!CanApplyNavigationSchemes || requested.Html is null && !IsNavigationUriAllowed(requested.Uri)) return false;
         if (requested.LocalContent is { } local && !CanLoadLocalContent(local)) return false;
-        NewCommand(true);
+        if (!NewCommand(true)) return false;
         // Reapply the collection after a canceled replacement may have revoked native
         // resource access. Reloading local content reissues the current URI explicitly.
         if (requested!.LocalContent is not null) lease?.Peer.Navigate(requested);
         else lease?.Peer.Reload(requestId);
         return true;
     }
-    private void NewCommand(bool preserveHtml) { ++requestId; CancelDocumentOperations(); requested = new(requestId, source, preserveHtml ? requested?.Html : null) { LocalContent = requested?.LocalContent }; }
+    private bool NewCommand(bool preserveHtml)
+    {
+        long id = ++requestId;
+        var next = new WebViewNavigationRequest(id, source, preserveHtml ? requested?.Html : null) { LocalContent = requested?.LocalContent };
+        CancelDocumentOperations();
+        if (id != requestId) return false; // Cancellation observers may submit a newer document.
+        requested = next;
+        return true;
+    }
 
     /// <summary>Stops loading and cancels pending document operations; no-op when detached.</summary>
     /// <remarks>UI thread only. Late completion for the stopped request cannot update state.</remarks>
     public void Stop()
     {
-        VerifyAccess(); ++requestId; CancelDocumentOperations();
-        try { lease?.Peer.Stop(); }
-        finally { isLoading = false; StateChanged?.Invoke(this, EventArgs.Empty); }
+        VerifyAccess(); long id = ++requestId;
+        try { CancelDocumentOperations(); }
+        finally
+        {
+            // A cancellation callback may navigate or change policy again. Do not stop or
+            // settle that newer request. A throwing callback still stops this request.
+            if (id == requestId)
+            {
+                try { lease?.Peer.Stop(); }
+                finally { if (id == requestId) { isLoading = false; StateChanged?.Invoke(this, EventArgs.Empty); } }
+            }
+        }
     }
 
     /// <summary>Executes explicit JavaScript and returns one JSON encoded value; undefined becomes "null".</summary>
@@ -381,8 +403,10 @@ public class WebView : NativeViewHost
             if (owner.requestId == beforeNotification && owner.requested is { } previous)
             {
                 var replay = previous with { Id = ++owner.requestId }; owner.requested = replay;
-                if (replay.LocalContent is { } local && !owner.CanLoadLocalContent(local))
+                if (!owner.CanApplyNavigationSchemes || replay.LocalContent is { } local && !owner.CanLoadLocalContent(local))
                     NavigationFailed(replay.Id, replay.Uri, WebViewErrorCategory.Engine);
+                else if (replay.Html is null && !owner.IsNavigationUriAllowed(replay.Uri))
+                    NavigationFailed(replay.Id, replay.Uri, WebViewErrorCategory.InvalidAddress);
                 else owner.lease?.Peer.Navigate(replay);
             }
         }
@@ -397,9 +421,12 @@ public class WebView : NativeViewHost
         public long BeginNativeNavigation()
         {
             if (!IsCurrent) return 0;
-            ++owner.requestId; owner.CancelDocumentOperations();
-            owner.requested = new(owner.requestId, owner.source, null) { LocalContent = owner.requested?.LocalContent };
-            return owner.requestId;
+            long id = ++owner.requestId;
+            var next = new WebViewNavigationRequest(id, owner.source, null) { LocalContent = owner.requested?.LocalContent };
+            owner.CancelDocumentOperations();
+            if (!Current(id)) return 0;
+            owner.requested = next;
+            return id;
         }
         public bool NavigationStarting(long id, Uri? uri, bool isRedirect)
         {
@@ -412,10 +439,15 @@ public class WebView : NativeViewHost
             // Engine-private data/about addresses used for raw HTML, including Reload,
             // are represented by null in the logical API and never bypass URI policy
             // for a later user navigation (BeginNativeNavigation clears the HTML request).
-            if (owner.requested?.Html is not null && !isRedirect &&
-                (uri is null || uri.Scheme == "data" || uri.AbsoluteUri == "about:blank")) uri = null;
+            bool rawHtmlStart = owner.requested?.Html is not null && !isRedirect &&
+                (uri is null || uri.IsAbsoluteUri && (uri.Scheme == "data" || uri.AbsoluteUri == "about:blank"));
+            if (rawHtmlStart) uri = null;
+            if (!owner.CanApplyNavigationSchemes)
+                return RejectNavigation(id, uri, WebViewErrorCategory.Engine);
             try { ValidateUri(uri); }
             catch (ArgumentException) { NavigationFailed(id, uri, WebViewErrorCategory.InvalidAddress); return false; }
+            if (!rawHtmlStart && !owner.IsNavigationUriAllowed(uri))
+                return RejectNavigation(id, uri, WebViewErrorCategory.InvalidAddress);
             var args = new WebViewNavigationStartingEventArgs(id, uri, isRedirect);
             try { owner.NavigationStarting?.Invoke(owner, args); }
             catch
@@ -435,6 +467,15 @@ public class WebView : NativeViewHost
             owner.isLoading = true; owner.lastFailure = null;
             owner.StateChanged?.Invoke(owner, EventArgs.Empty);
             return Current(id);
+        }
+        private bool RejectNavigation(long id, Uri? uri, WebViewErrorCategory category)
+        {
+            owner.requested = owner.committed; owner.source = owner.committed?.Uri;
+            // Scripts can run while a load is in progress. Revoke its canonical token
+            // before failure observers; do not overwrite a reentrant replacement.
+            try { owner.CancelDocumentOperations(); }
+            finally { NavigationFailed(id, uri, category); }
+            return false;
         }
         public void NavigationCompleted(long id, Uri? uri, int? httpStatusCode)
         {
