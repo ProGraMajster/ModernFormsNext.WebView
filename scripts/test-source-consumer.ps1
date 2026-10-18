@@ -89,7 +89,9 @@ $properties = @("-p:ModernFormsNextSourceRoot=$FrameworkRoot","-p:WebViewSourceR
 if ($JavaSdkDirectory) { $properties += "-p:JavaSdkDirectory=$JavaSdkDirectory" }
 $results = [ordered]@{
     snapshot = $Snapshot; frameworkCommit = $actualCommit; platform = $Platform
-    webViewCommit = (git -C $webViewRoot rev-parse HEAD); sdk = (& dotnet --version)
+    webViewCommit = (git -C $webViewRoot rev-parse HEAD)
+    webViewWorkingTreeDirty = [bool](git -C $webViewRoot status --porcelain)
+    sdk = (& dotnet --version)
     mode = 'isolated source-reference compile; Windows headless execution; not official packages or native qualification'
     builds = @()
 }

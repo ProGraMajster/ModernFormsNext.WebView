@@ -9,7 +9,7 @@ There is no request to retrofit or republish 1.11.1.
 The original independent contribution started at main b9a5c5e; its final audit integrates
 accepted #47/#48/#49 without losing their code or documentation. Ordinary WebView #7/#8
 still has independent gates: optional Hybrid #21/#15 and Blazor #22 are not prerequisites.
-No package/version/metadata, main-framework source or historical baseline pin is changed.
+No release/package-version metadata, main-framework source or historical baseline pin is changed.
 
 ## Current source development and future package alignment
 

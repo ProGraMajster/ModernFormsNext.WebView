@@ -94,7 +94,28 @@ Android648ae02a6cf24b5481b0658febaab03c. Earlier fixture compile errors (Android
 namespace collision and ambiguous Path) were corrected in the fixture and rerun; they are
 not product qualification passes. Wrong existing SHA/nested bootstrap destinations were
 explicitly rejected without mutation; all changed PowerShell scripts parse successfully.
-Post-fix full product qualification is recorded when complete. New PRs remain OPEN.
+The post-fix full current-master qualification passed Debug/Release245/245 tests and
+native Windows/API34 in both configurations, zero warnings/errors/skips
+(artifacts/development-current-master-final). The first post-fix full build exposed direct
+Core SDK use without explicit references in Windows tests/research (13 missing-symbol
+errors); both projects now explicitly reference the same centrally selected SDK. Older
+d272100 CI39145411411/39145436173 correctly failed Windows; no test was weakened.
+Corrected implementation305abf4d0ecdbe7b13bd529ed375171a2ed2389e has terminal SUCCESS
+in all six jobs of [push39145536133](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39145536133)
+and [PR39145539430](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39145539430).
+Post-fix historical69c5ea2 full restore, Debug/Release245/245 tests and native
+Windows/API34 both configurations also passed, zero warnings/errors/skips
+(artifacts/development-historical-baseline-final). World research builds with explicit
+Core SDK references passed Debug/Release on7cfa44e (artifacts/development-world-Debug.log
+and development-world-Release.log). Full product/native validation used the corrected
+305abf4 implementation; subsequent changes only refine CI/consumer metadata and reports.
+GO for source development is qualified separately for both frozen source lanes.
+
+The final CI-only checkout refinement explicitly selects the PR head/push SHA instead
+of a synthetic PR merge. Consumer results also record dirty working-tree status.
+The [development PR51](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/51)
+remains OPEN against main; its final delivered SHA/terminal CI are recorded in the PR
+description after the last report commit. No new PR is automatically merged.
 
 The expected negative official1.11.1 control proves only that old packages lack these
 new hosting contracts; it is not a bug, patch-release request or development blocker.
