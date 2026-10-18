@@ -8,7 +8,7 @@ internal sealed class ResourceCatalog
 {
     internal readonly WebViewLocalContent Content;
     internal readonly string[] Paths;
-    internal ResourceCatalog(string razorHtml)
+    internal ResourceCatalog(string razorHtml, WebViewLocalContentPolicy? policy = null)
     {
         byte[] Read(string name)
         {
@@ -24,7 +24,7 @@ internal sealed class ResourceCatalog
             ["_framework/blazor.webview.js"] = Read("blazor.webview.js"),
             ["_framework/blazor.modules.json"] = Read("blazor.modules.json")
         };
-        Paths = resources.Keys.ToArray(); Content = new(resources);
+        Paths = resources.Keys.ToArray(); Content = new(resources, policy ?? WebViewLocalContentPolicy.Default);
     }
     internal byte[] Read(string path)
     {

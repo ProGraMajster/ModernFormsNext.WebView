@@ -17,8 +17,10 @@ internal static class Program
             using var services = RazorSnapshots.CreateServices();
             // Render immutable snapshots before the native loop starts. This experiment
             // does not add an app dispatcher or synchronously block an active UI loop.
-            var snapshots = new[] { new ResourceCatalog(RazorSnapshots.RenderAsync(services, 0).GetAwaiter().GetResult()),
-                new ResourceCatalog(RazorSnapshots.RenderAsync(services, 1).GetAwaiter().GetResult()) };
+            var policy = args.Contains("--application-policy", StringComparer.Ordinal)
+                ? WebViewLocalContentPolicy.Application : WebViewLocalContentPolicy.Default;
+            var snapshots = new[] { new ResourceCatalog(RazorSnapshots.RenderAsync(services, 0).GetAwaiter().GetResult(), policy),
+                new ResourceCatalog(RazorSnapshots.RenderAsync(services, 1).GetAwaiter().GetResult(), policy) };
             bool validate = args.Contains("--validate", StringComparer.Ordinal);
             // The validator owns the temporary profile for the whole process lifetime.
             // The provider's application-owned environment can outlive its last controller.
@@ -69,16 +71,35 @@ internal static class Program
                 await NavigateAsync(browser, () => manager.Navigate("index.html"), form.Lifetime);
                 ContractValidation.Require(await browser.ExecuteScriptAsync("document.getElementById('razor-count').textContent") == "\"0\"", "real compiled Razor DOM");
                 ContractValidation.Require(await browser.ExecuteScriptAsync("typeof Blazor.start") == "\"function\"", "official package JavaScript loaded");
-                ContractValidation.Require(await browser.ExecuteScriptAsync("document.baseURI===location.href") == "true", "fixed base-uri policy rejects supplied base element");
-                // Execute the unmodified public boot API. Its failed fetch must have a
-                // positive CSP violation, not a missing asset or a mocked JS response.
+                bool application = snapshots[0].Content.Policy == WebViewLocalContentPolicy.Application;
+                string expectedBase = application ? snapshots[0].Content.Origin.AbsoluteUri : snapshots[0].Content.GetUri("index.html").AbsoluteUri;
+                ContractValidation.Require(await browser.ExecuteScriptAsync("document.baseURI===" + System.Text.Json.JsonSerializer.Serialize(expectedBase)) == "true", "native base URI follows selected catalog policy");
+                ContractValidation.Require(browser.BrowserCapabilities.HasFlag(WebViewCapabilities.ConfigurableLocalContent), "native policy feature detection");
+                // No fetch shim or boot-script patch: observe the original public API.
                 await browser.ExecuteScriptAsync("Blazor.start().then(()=>window.probeStart='started',()=>window.probeStart='blocked');null");
-                await WaitScriptAsync(browser, "window.probeStart==='blocked'&&probeViolations.some(x=>x==='connect-src')", form.Lifetime);
+                if (application)
+                {
+                    await WaitScriptAsync(browser, "window.probeStart==='started'", form.Lifetime);
+                    // The real boot path must reach its AttachPage send before any forged
+                    // test message. A resolved start promise alone is insufficient.
+                    await WaitAsync(() => manager.RejectedAttachPages > 0, form.Lifetime);
+                    await browser.ExecuteScriptAsync("fetch('_framework/blazor.modules.json').then(async r=>window.probeManifest={status:r.status,array:Array.isArray(await r.json()),csp:r.headers.get('content-security-policy')});null");
+                    await WaitScriptAsync(browser, "window.probeManifest!==undefined", form.Lifetime);
+                    string expectedCsp = System.Text.Json.JsonSerializer.Serialize(snapshots[0].Content.Policy.ContentSecurityPolicy);
+                    ContractValidation.Require(await browser.ExecuteScriptAsync("probeManifest.status===200&&probeManifest.array&&probeManifest.csp===" + expectedCsp + "&&!probeViolations.includes('connect-src')&&!probeViolations.includes('base-uri')") == "true", "real self manifest JSON and exact selected CSP; no connect/base denial");
+                    Console.WriteLine("PASS A: APPLICATION ASSETS GO; original Blazor.start resolved + real AttachPage rejected + self manifest 200/JSON/exact CSP + origin base");
+                }
+                else
+                {
+                    await WaitScriptAsync(browser, "window.probeStart==='blocked'&&probeViolations.some(x=>x==='connect-src')", form.Lifetime);
+                    ContractValidation.Require(manager.RejectedAttachPages == 0, "default boot never reaches AttachPage");
+                    Console.WriteLine("PASS default policy unchanged: real connect-src and base-uri denials");
+                }
                 await browser.ExecuteScriptAsync("modernFormsWebView.postMessage('__bwv:[\"AttachPage\",\"claimed-source\"]');null");
                 await WaitAsync(() => manager.RejectedMessages > 0, form.Lifetime);
                 ContractValidation.Require(!await manager.TryDispatchAsync(_ => throw new InvalidOperationException("Unverified native scope dispatch.")), "Blazor page context remains unattached");
                 ContractValidation.Require(!browser.BrowserCapabilities.HasFlag(WebViewCapabilities.AuthenticatedMessaging), "no privileged capability promotion");
-                Console.WriteLine("PASS native public manager assets/dispatcher + official Blazor.start blocked by connect-src CSP + base-uri denial + untrusted IPC rejected");
+                Console.WriteLine("PASS B: AUTHORIZED IPC/INTERACTIVITY NO-GO; managed page remains unattached; no privileged native scope");
             }
             finally { browser.WebMessageReceived -= received; }
         }
@@ -87,7 +108,7 @@ internal static class Program
         await NavigateAsync(browser, () => ContractValidation.Require(browser.Reload(), "passive Razor reload"), form.Lifetime);
         ContractValidation.Require(await browser.ExecuteScriptAsync("document.getElementById('razor-count').textContent") == "\"1\"", "passive snapshot lifetime/reload");
         Console.WriteLine("PASS native MFN controls + passive compiled Razor DOM/parameters/independent origins/reload; renderer/scoped DI disposal validated");
-        Console.WriteLine("FEASIBILITY EXECUTED; INTERACTIVE BLAZOR NO-GO under current content/security contract");
+        Console.WriteLine("FEASIBILITY EXECUTED; INTERACTIVE BLAZOR NO-GO under current IPC/security contract");
     }
 
     private static async Task ReadyAsync(WebView browser, CancellationToken token)
@@ -128,7 +149,7 @@ internal sealed class ProbeForm : Form
     internal ProbeForm(ResourceCatalog[] snapshots)
     {
         Lifetime = lifetime.Token; Text = "Razor / WebViewManager feasibility research"; Size = new Size(900, 620);
-        var status = new Label { Dock = DockStyle.Bottom, Height = 55, Text = "Passive Razor renderer. Interactive Blazor remains blocked by current content/security policy." };
+        var status = new Label { Dock = DockStyle.Bottom, Height = 55, Text = "Passive Razor renderer. Application policy permits assets; interactive Blazor requires qualified IPC." };
         int index = 0; NextSnapshot.Click += (_, _) => { index = 1 - index; Browser.NavigateToLocalContent(snapshots[index].Content); };
         Controls.Add(Browser); Controls.Add(status); Controls.Add(NextSnapshot);
     }

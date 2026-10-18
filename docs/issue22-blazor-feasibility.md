@@ -5,6 +5,10 @@ Then-open wording describes the original research delivery. Its default-profile 
 is preserved. The explicit [application-content policy](local-content-policy.md) permits
 a separate controlled assets experiment; it does not authorize managed page attachment.
 
+The [application-policy experiment](blazor-application-policy.md) now tests that
+separate path. Its asset-start decision and IPC decision are independent; this report
+retains the original default-policy result.
+
 ## Decision
 
 **NO-GO for a full interactive BlazorWebView using the current public content/security
