@@ -118,6 +118,13 @@ outside the product solution. Its validator requires an adb path and explicit de
 run Debug/Release with `-Recreate`. Its terminal marker means the experiment executed;
 the privileged result is NO-GO. Hosted compilation is not native execution evidence.
 
+The separate [Windows Blazor feasibility probe](../research/BlazorFeasibility.Windows/README.md)
+has contract-only mode (`--validate-contracts`) for hosted CI, plus an explicit native
+`Validate.ps1 -Configuration Debug/Release` requiring a real WebView2 desktop. It uses
+the same canonical WebView/dispatcher and waits for its owned process tree before cleaning
+the artifact profile. Terminal execution PASS records **interactive NO-GO**, with positive
+connect-src/base-uri denial and rejected untrusted IPC; it is not an interactive Blazor PASS.
+
 The workflow has separate shared, Windows and Android jobs. Each checks out the framework at
 the exact pinned commit and passes ModernFormsNextSourceRoot. Shared runs the deterministic
 suite on Ubuntu; Windows builds the sample and tests its adapter queue; Android installs its

@@ -19,6 +19,7 @@ consumes it without defining another hosting or platform service system.
 - [Current Phase 2 follow-up report and next issue order](phase2-followup-report.md)
 - [Final #39/#40 audit and normal merges](pr39-40-final-audit.md)
 - [Conversion deadlines and cancellation (#19)](issue19-errors-cancellation.md)
+- [Executable .NET 10 Razor/Blazor feasibility and NO-GO ADR (#22)](issue22-blazor-feasibility.md)
 - [PR #35 final audit and merge](pr35-final-audit.md)
 - [Phase 2 progress, dependency and release gates](phase2-progress.md)
 - [Platform capabilities and limitations](capabilities.md)

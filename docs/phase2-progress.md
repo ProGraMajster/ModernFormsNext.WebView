@@ -17,6 +17,14 @@ Windows outstanding-RPC host recreation. Delivery/CI is tracked on its separate 
 implementation `68c97947f548910d335c07b6b69dc177af24c340`; issue remains open for review
 and its privileged portion remains gated. No new PR is merged automatically.
 
+#19 final delivery head `1facdc2974f2e060a3b32ba5bd6cfefacbc6a624` has terminal SUCCESS
+in [PR CI](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39124173180)
+and [push CI](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39124170315),
+verified before #22 implementation. [#22's executable prototype/ADR](issue22-blazor-feasibility.md)
+tests public .NET10 APIs, compiled Razor/native controls, scoped lifetime and actual CSP
+startup denial. Interactive Blazor remains NO-GO under the current contract; no #23–#31
+implementation or privileged native IPC is enabled.
+
 ## Current follow-up delivery
 
 [The current detailed report](phase2-followup-report.md) supersedes historical state below:

@@ -7,6 +7,9 @@
     <PackageVersion Include="HarfBuzzSharp" Version="14.2.1.1" />
     <!-- Research APK only. Newer WebKit 1.16/1.17 AARs require API24. -->
     <PackageVersion Include="Xamarin.AndroidX.WebKit" Version="1.15.0.2" />
+    <!-- Isolated Windows feasibility project only; no ASP.NET dependency in WebView. -->
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebView" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />

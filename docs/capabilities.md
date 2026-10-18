@@ -56,3 +56,8 @@ Platform qualification and dependency gates are recorded in [phase2-progress](ph
 [#19 error/deadline hardening](issue19-errors-cancellation.md) includes JSON conversion in
 the existing RPC deadline and gives requested cancellation priority over coincident errors.
 This changes no authentication capability and exposes no C# handlers.
+
+The optional [#22 research executable](issue22-blazor-feasibility.md) is outside product
+projects. It demonstrates passive compiled Razor rendering and public manager seams;
+interactive Blazor startup is NO-GO under current CSP/IPC contracts. Ordinary WebView
+acquires no ASP.NET dependencies or Blazor capability from that experiment.

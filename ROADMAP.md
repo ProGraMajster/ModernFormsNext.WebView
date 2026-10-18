@@ -51,8 +51,8 @@ Baseline #1-#6 -> #7 preview -> #8 stable
 #19 privileged errors -> separately verified platform transport
 #18 + #19 -> #20 offline sample/diagnostics -> #21 qualification/preview
 
-#22 independent runnable feasibility spike -> GO/NO-GO ADR
-#22 GO + lifecycle/assets contract -> #23 host + #24 assets
+#22 executable Windows spike: interactive NO-GO under current CSP/IPC contract
+#22 new verified content/security contract + fresh GO -> #23 host + #24 assets (BLOCKED)
 #23 + #24 -> #25 root components -> #26 interop + #27 lifetime/hot reload
 #22 Android GO -> #28/#30 Android feasibility/adapter
 qualified implemented platforms -> #29/#31 samples/tests/optional package
@@ -93,6 +93,14 @@ checks. #15 remains PARTIAL/open; the parent-relay model remains privileged NO-G
 cancellation/error priority with canonical/native lifetime regressions. Privileged error
 mapping stays blocked; #13/#17/#18 remain gated. Next: bounded #22 public-API feasibility,
 then a separate trust strategy. Older delivery records below are historical.
+
+#19 is delivered in open [PR #41](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/41),
+final head `1facdc2`, all three exact-head CI jobs SUCCESS; full Debug/Release 207/207 and
+both native platforms PASS. [#22 research](docs/issue22-blazor-feasibility.md) now supplies
+an executable .NET10 Windows Razor/public-WebViewManager prototype. Passive rendering,
+DI, assets, dispatcher and disposal pass, while unmodified interactive startup is blocked
+by connect-src/base-uri policy and unverified privileged IPC remains disabled. Full #23–#31
+stay gated. A separate Hybrid trust strategy must address the measured constraints.
 
 PR #36/#37/#38 are merged normally; issues #33/#11/#12 are complete within their scoped
 criteria. [Merge audit](docs/pr36-38-final-audit.md) records history, CI and fresh qualification.
