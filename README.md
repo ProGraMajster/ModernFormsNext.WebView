@@ -24,6 +24,12 @@ and the [trust matrix](docs/hybrid-security.md).
 Source bootstrap is pinned to framework commit
 `69c5ea2b20b07d9df801340c8ae9e3e1ca5dfbc3`. No published package is selected as the
 NativeViewHost dependency. See [testing](docs/testing.md) for reproducible build commands.
+
+The [independent preview/stable checklist](docs/baseline-preview-readiness.md) records
+official package compatibility and remaining native/manual/release gates. Optional
+Hybrid and Blazor are separate from the ordinary WebView release path. The current
+[development report](docs/security-policy-development-report.md) links reviewed merges
+and the new open implementation/research PRs.
 The existing application-owned provider is registered explicitly:
 
 ```csharp
