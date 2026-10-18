@@ -86,6 +86,14 @@ calls only; bounded protocol validation is independent of the pending authentica
 
 ## Subsequent verified state
 
+Latest: #39/#40 normally merged, local main `b329da3`. The
+[final audit](docs/pr39-40-final-audit.md) records exact heads/CI and fresh full/native
+checks. #15 remains PARTIAL/open; the parent-relay model remains privileged NO-GO.
+[#19](docs/issue19-errors-cancellation.md) fixes total conversion deadlines and coincident
+cancellation/error priority with canonical/native lifetime regressions. Privileged error
+mapping stays blocked; #13/#17/#18 remain gated. Next: bounded #22 public-API feasibility,
+then a separate trust strategy. Older delivery records below are historical.
+
 PR #36/#37/#38 are merged normally; issues #33/#11/#12 are complete within their scoped
 criteria. [Merge audit](docs/pr36-38-final-audit.md) records history, CI and fresh qualification.
 [#16 native AndroidX research](docs/issue16-android-origin-research.md) demonstrates exact

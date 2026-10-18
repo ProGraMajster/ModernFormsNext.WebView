@@ -1,5 +1,22 @@
 # Phase 2 progress — 2026-10-17
 
+## Maturity follow-up
+
+#39 → #40 were finally audited, freshly qualified and normally merged into main
+`b329da3eb114f9cd713b60feffe7242b22c0f0e1`; [post-merge CI](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39053637461)
+is SUCCESS. [Merge report](pr39-40-final-audit.md) has every SHA/CI/result. #15 stays
+OPEN/PARTIAL; privileged messaging remains unavailable. #19 implements the
+[error/deadline fixes](issue19-errors-cancellation.md) in a new branch/PR. Sections below
+preserve historical states, including then-open #39/#40.
+
+#19 final local Debug/Release: 207/207 tests each, 0 warnings/errors/skips;
+Windows and Android native RUNTIME PASS both, including the new failure matrix and
+Windows outstanding-RPC host recreation. Delivery/CI is tracked on its separate open PR.
+
+#19 delivery: [PR #41](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/41),
+implementation `68c97947f548910d335c07b6b69dc177af24c340`; issue remains open for review
+and its privileged portion remains gated. No new PR is merged automatically.
+
 ## Current follow-up delivery
 
 [The current detailed report](phase2-followup-report.md) supersedes historical state below:

@@ -91,8 +91,12 @@ pending-map changes and completion sources run continuations asynchronously. No 
 or application callback runs under that lock.
 
 Caller cancellation, canonical document cancellation, transport disposal and client disposal
-cancel local waits even if native submission never completes. The deadline separately bounds
-both submission and response. Cleanup removes pending state on all completion paths.
+cancel local waits even if native submission never completes. The total deadline includes
+request/result conversion, submission and response. Synchronous converters cannot be
+preempted; elapsed time is checked before submission/return and only the remaining budget
+is sent to the page. Cancellation wins over a coincident conversion/native failure.
+Cleanup removes pending state on all completion paths. [#19](issue19-errors-cancellation.md)
+records reproduced defects, fixes and canonical/native regression evidence.
 Disposing the client does not dispose its transport or browser; disposing the transport
 does not dispose its browser. There are no automatic retries or replay of requests.
 

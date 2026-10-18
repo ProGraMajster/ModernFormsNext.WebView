@@ -21,6 +21,7 @@ public sealed class RpcTests
         internal readonly List<JsonObject> Sent = [];
         internal Action<JsonObject>? OnSend;
         internal Task Submission = Task.CompletedTask;
+        internal int PostAttempts;
         public WebViewDocumentContext CurrentDocument { get; private set; }
         public CancellationToken LifetimeToken { get; }
         public event EventHandler<WebViewTransportMessageEventArgs>? MessageReceived;
@@ -29,6 +30,7 @@ public sealed class RpcTests
         public Task<string> ExecuteScriptAsync(string script, CancellationToken cancellationToken = default) => Task.FromResult("null");
         public Task PostMessageAsync(string message, CancellationToken cancellationToken = default)
         {
+            ++PostAttempts;
             cancellationToken.ThrowIfCancellationRequested();
             var value = JsonNode.Parse(message)!.AsObject(); Sent.Add(value); OnSend?.Invoke(value); return Submission;
         }
@@ -282,5 +284,76 @@ public sealed class RpcTests
         var metadata = new RpcTestJson(new JsonSerializerOptions { Converters = { new CancelOnWrite(caller.Cancel) } });
         var task = client.InvokeAsync("echo", 1, metadata.Int32, RpcTestJson.Default.Int32, cancellationToken: caller.Token);
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => task); Assert.Empty(t.Sent);
+    }
+
+    private sealed class RequestConverter(Action action) : JsonConverter<int>
+    {
+        public override int Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) => reader.GetInt32();
+        public override void Write(Utf8JsonWriter writer, int value, JsonSerializerOptions options)
+        { action(); writer.WriteNumberValue(value); }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task TotalDeadlineIncludesSerializationAndItsFailure(bool throws)
+    {
+        using var t = new Transport(); using var client = new WebViewRpcClient(t);
+        t.OnSend = r => t.Reply(r);
+        var metadata = new RpcTestJson(new JsonSerializerOptions { Converters = { new RequestConverter(() =>
+        { Thread.Sleep(60); if (throws) throw new InvalidOperationException("private-converter-detail"); }) } });
+        var failure = await Assert.ThrowsAsync<WebViewRpcException>(() => client.InvokeAsync("echo", 1,
+            metadata.Int32, RpcTestJson.Default.Int32, TimeSpan.FromMilliseconds(10)));
+        Assert.Equal(WebViewRpcErrorCategory.Timeout, failure.Category); Assert.Equal(0, t.PostAttempts);
+        Assert.DoesNotContain("private", failure.ToString()); Assert.Null(failure.InnerException);
+    }
+
+    [Fact]
+    public async Task SerializationConsumesThePageDeadlineBudget()
+    {
+        using var t = new Transport(); using var client = new WebViewRpcClient(t);
+        t.OnSend = r => t.Reply(r);
+        var metadata = new RpcTestJson(new JsonSerializerOptions { Converters = { new RequestConverter(() => Thread.Sleep(30)) } });
+        Assert.Equal(42, await client.InvokeAsync("echo", 1, metadata.Int32, RpcTestJson.Default.Int32, TimeSpan.FromSeconds(5)));
+        Assert.InRange(t.Sent[0]["timeoutMs"]!.GetValue<int>(), 1, 4970);
+    }
+
+    [Theory]
+    [InlineData("caller")]
+    [InlineData("client")]
+    [InlineData("transport")]
+    [InlineData("document")]
+    public async Task CancellationWinsOverCoincidentTransportFailure(string lifetime)
+    {
+        using var t = new Transport(); using var client = new WebViewRpcClient(t); using var caller = new CancellationTokenSource();
+        t.OnSend = _ =>
+        {
+            switch (lifetime) { case "caller": caller.Cancel(); break; case "client": client.Dispose(); break; case "transport": t.Dispose(); break; default: t.Replace(); break; }
+            throw new InvalidOperationException("private-native-detail");
+        };
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => Invoke(client, token: caller.Token));
+    }
+
+    [Fact]
+    public async Task SuccessfulReentrantConverterCannotReachTransportAfterCancellation()
+    {
+        using var t = new Transport(); using var client = new WebViewRpcClient(t); using var caller = new CancellationTokenSource();
+        var metadata = new RpcTestJson(new JsonSerializerOptions { Converters = { new RequestConverter(caller.Cancel) } });
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => client.InvokeAsync("echo", 1, metadata.Int32,
+            RpcTestJson.Default.Int32, cancellationToken: caller.Token));
+        Assert.Equal(0, t.PostAttempts);
+    }
+
+    [Fact]
+    public async Task RepeatedTerminalFailuresReturnPendingCapacity()
+    {
+        using var t = new Transport(); using var client = new WebViewRpcClient(t);
+        for (int i = 0; i < WebViewRpcProtocol.MaxPendingRequests + 10; ++i)
+        {
+            t.OnSend = r => t.Reply(r, "\"private-invalid-int\"");
+            var error = await Assert.ThrowsAsync<WebViewRpcException>(() => Invoke(client));
+            Assert.Equal(WebViewRpcErrorCategory.InvalidResponse, error.Category);
+        }
+        t.OnSend = r => t.Reply(r); Assert.Equal(42, await Invoke(client)); Assert.Equal(1, t.Subscribers);
     }
 }
