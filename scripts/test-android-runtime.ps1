@@ -8,6 +8,8 @@ param(
     [switch]$NativeBack,
     # The human must explicitly designate the selected physical device for this test.
     [switch]$AllowPhysicalDevice,
+    [string]$AndroidSdkDirectory,
+    [string]$JavaSdkDirectory,
     [string]$TlsProbeUri,
     [string]$EvidenceDirectory=(Join-Path $PSScriptRoot '../artifacts/native-android'),
     [int]$TimeoutSeconds=180
@@ -36,7 +38,7 @@ $apk=Join-Path $repo "samples/ModernFormsNext.WebView.Sample.Android/bin/$Config
 if(!(Test-Path -LiteralPath $apk)){throw 'Build and sign the requested sample first'}
 # Inspect the actual APK rather than just the source manifest. Older AAR metadata can
 # implicitly inject legacy storage/phone permissions during the final manifest merge.
-$sdkRoot=Split-Path (Split-Path $AdbPath -Parent) -Parent
+$sdkRoot=if($AndroidSdkDirectory){(Resolve-Path -LiteralPath $AndroidSdkDirectory).Path}else{Split-Path (Split-Path $AdbPath -Parent) -Parent}
 $aapt=Join-Path $sdkRoot 'build-tools/36.0.0/aapt2.exe'
 if(!(Test-Path -LiteralPath $aapt)){$aapt=Join-Path $sdkRoot 'build-tools/36.0.0/aapt2'}
 $permissions=& $aapt dump permissions $apk
@@ -48,7 +50,7 @@ $identity=[ordered]@{
     runId=$runId;startUtc=[DateTime]::UtcNow.ToString('o');serial=$Serial;emulator=$isEmulator
     api=$api;abi=(DeviceText @('shell','getprop','ro.product.cpu.abi'));configuration=$Configuration;mode=$Mode
     webViewCommit=(git -C $repo rev-parse HEAD | Out-String).Trim();webViewWorkingTreeDirty=[bool](git -C $repo status --porcelain)
-    frameworkCommit=$actualFramework;dotnetSdk=(& dotnet --version | Out-String).Trim();apkSHA256=(Get-FileHash -LiteralPath $apk).Hash
+    frameworkCommit=$actualFramework;androidSdkRoot=$sdkRoot;dotnetSdk=(& dotnet --version | Out-String).Trim();apkSHA256=(Get-FileHash -LiteralPath $apk).Hash
     recreation=[bool]$Recreate;nativeBack=[bool]$NativeBack;status='RUNNING'
 }
 $identity | ConvertTo-Json | Set-Content (Join-Path $output 'result.json')
@@ -56,7 +58,12 @@ $providerPackages=DeviceText @('shell','pm','list','packages','webview')
 $providerPackages | Set-Content (Join-Path $output 'provider-packages.log')
 if($api -ge 24){DeviceText @('shell','dumpsys','webviewupdate') | Set-Content (Join-Path $output 'selected-provider.log')}
 & $AdbPath version | Set-Content (Join-Path $output 'adb-version.log')
-& 'C:/Program Files/Android/openjdk/jdk-21.0.8/bin/java.exe' -version 2>&1 | Set-Content (Join-Path $output 'jdk-version.log')
+if($JavaSdkDirectory){
+    $java=Join-Path (Resolve-Path -LiteralPath $JavaSdkDirectory).Path 'bin/java.exe'
+    if(!(Test-Path -LiteralPath $java)){$java=Join-Path $JavaSdkDirectory 'bin/java'}
+    & $java -version 2>&1 | Set-Content (Join-Path $output 'jdk-version.log')
+    if($LASTEXITCODE){throw 'Cannot record the explicitly supplied build JDK'}
+}else{'NOT SUPPLIED: this driver does not build the APK; record its actual build JDK separately' | Set-Content (Join-Path $output 'jdk-version.log')}
 foreach($package in ($providerPackages -split '[\r\n]+' | Where-Object {$_ -match '^package:'})){
     $provider=$package.Substring(8).Trim()
     ((DeviceText @('shell','dumpsys','package',$provider)) -split '[\r\n]+') | Where-Object {$_ -match 'versionCode=|versionName='} | Set-Content (Join-Path $output ($provider+'-version.log'))

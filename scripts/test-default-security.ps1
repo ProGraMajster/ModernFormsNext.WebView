@@ -4,6 +4,8 @@ param(
     [ValidateSet('Debug','Release')][string]$Configuration='Debug',
     [string]$AdbPath,
     [string]$Serial,
+    [string]$AndroidSdkDirectory,
+    [string]$JavaSdkDirectory,
     [switch]$AllowPhysicalDevice,
     [switch]$Recreate,
     [switch]$Keyboard,
@@ -41,7 +43,7 @@ try {
         & $AdbPath -s $Serial reverse --no-rebind "tcp:$tlsPort" "tcp:$tlsPort"
         if($LASTEXITCODE){throw 'Cannot create a new test-owned TLS reverse mapping; existing mappings are preserved'}
         $reverse=$true
-        & (Join-Path $PSScriptRoot 'test-android-runtime.ps1') -AdbPath $AdbPath -Serial $Serial -FrameworkRoot $FrameworkRoot -Configuration $Configuration -AllowPhysicalDevice:$AllowPhysicalDevice -Recreate:$Recreate -TlsProbeUri ($info.tlsUri+'/certificate') *> (Join-Path $output 'android-driver.log')
+        & (Join-Path $PSScriptRoot 'test-android-runtime.ps1') -AdbPath $AdbPath -Serial $Serial -FrameworkRoot $FrameworkRoot -Configuration $Configuration -AllowPhysicalDevice:$AllowPhysicalDevice -Recreate:$Recreate -AndroidSdkDirectory $AndroidSdkDirectory -JavaSdkDirectory $JavaSdkDirectory -TlsProbeUri ($info.tlsUri+'/certificate') *> (Join-Path $output 'android-driver.log')
         if(!$?){throw 'Selected-device native default security/lifecycle validation failed'}
     }else{
         $sample=Join-Path $repo "samples/ModernFormsNext.WebView.Sample.Windows/bin/$Configuration/net10.0-windows10.0.17763.0/ModernFormsNext.WebView.Sample.Windows.exe"

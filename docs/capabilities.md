@@ -1,5 +1,9 @@
 # Baseline capability matrix
 
+See [native qualification](native-platform-qualification.md) for actual API23/34/physical
+provider, Activity, default security, input/DPI and Designer results. API23 OS availability
+does not imply that its stock Chromium44 passes the modern endpoint or Floor/history lane.
+
 NavigationSchemeFiltering is an additive optional capability: initialized Windows Core
 hooks or an active Android API24+ main-frame-aware client. API23/older adapters preserve
 Default and explicitly reject nondefault loads. This is not a POST/subresource/frame

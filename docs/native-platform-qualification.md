@@ -59,9 +59,9 @@ was called a product pass. Only the owned new AVD was used for the subsequent fr
 
 ```powershell
 ./scripts/test-android-runtime.ps1 -AdbPath $adb -Serial $api23Serial `
-  -FrameworkRoot $framework -Configuration Debug -Mode Floor -NativeBack -Recreate
+  -FrameworkRoot $framework -JavaSdkDirectory $jdk -Configuration Debug -Mode Floor -NativeBack -Recreate
 ./scripts/test-default-security.ps1 -Platform Android -AdbPath $adb `
-  -Serial $api34Serial -FrameworkRoot $framework -Configuration Release -Recreate
+  -Serial $api34Serial -FrameworkRoot $framework -JavaSdkDirectory $jdk -Configuration Release -Recreate
 ```
 
 Repeat configurations after signing the matching sample. The test Activity sets only its
@@ -76,7 +76,15 @@ actual DOM resources, CSP inline/eval denial, history, Reload, Stop, focus, JS s
 five leases, unsupported nondefault scheme policy with Default retained, system Back
 through the canonical MFN route to an explicit app GoBack, and actual Activity recreation.
 Modern RPC prerequisites are false; Floor is not an RPC pass. One ES5 frame-control timeout
-remains unexplained despite a later entire Floor/Back/recreation PASS.
+remains unexplained despite a later entire development Floor/Back/recreation PASS.
+Final committed-head repeats failed in Debug at the frame control and in Release at
+the public GoBack command after the second resource rendered. Thus API23 Floor remains
+FAIL/PARTIAL, including a history qualification failure; no stable API23 claim is made.
+
+Supply the actual build JDK with `-JavaSdkDirectory`; the native driver does not build
+the APK or infer that a PATH JDK was used to compile it. An independently installed ADB
+client can use `-AndroidSdkDirectory` to locate the pinned aapt2 build tool. No developer's
+machine-specific JDK path is embedded in these scripts.
 
 Modern lifecycle validation uses the framework's weak Activity tracker and retained Form.
 A real RPC handler starts and remains pending while native renderer work starts, then
