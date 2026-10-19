@@ -1,5 +1,9 @@
 # Build and qualification
 
+The [native platform qualification](native-platform-qualification.md) adds explicit-serial
+Android Floor/lifecycle and owned TLS/default-security drivers, real Windows DPI/input
+and VS Designer evidence, and retained failures. Consult its limits before acceptance.
+
 Use .NET SDK 10.0.401. Windows requires the installed WebView2 Runtime for native validation;
 the adapter references Microsoft.Web.WebView2 1.0.4258.31. Android uses the .NET Android workload
 and SDK platform/build tools 36 with JDK 21. The sample minimum is API 23; no AndroidX WebKit is required.

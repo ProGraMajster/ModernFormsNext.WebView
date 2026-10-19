@@ -27,6 +27,7 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
     private Uri? expectedUri;
     private bool disposed, rawHtml, stopped;
     private bool loading;
+    private bool retireBeforeNextNavigation;
     private long browserGeneration;
     private PixelSize contentSize;
     private bool Current => !disposed && site.IsCurrent && callbacks.IsCurrent;
@@ -116,18 +117,21 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
         long previousId = id;
         id = request.Id;
         if (!callbacks.NavigationStarting(id, request.Uri, false) || !Current || id != request.Id) return;
-        if (loading && previousId != request.Id)
+        if ((loading || retireBeforeNextNavigation) && previousId != request.Id)
         {
             // Android supplies no native navigation identity. An interrupted document gets
             // a new browser content instance so callbacks from the replaced request cannot
             // be relabeled with the new ID. This deliberately resets native history on
             // overlapping navigation; the backend-owned site/container remains unchanged.
+            // Failed loads and Stop during a load can still queue native error-page
+            // Started/Finished callbacks. They must also lose their old View before a
+            // new raw HTML request, whose private URL cannot identify those callbacks.
             ReplaceInterruptedBrowser();
             if (!Current || view is null || id != request.Id) return;
             callbacks.HistoryChanged(request.Id, false, false);
             if (!Current || id != request.Id) return;
         }
-        id = request.Id; expectedUri = request.Uri; rawHtml = request.Html is not null; stopped = false;
+        id = request.Id; expectedUri = request.Uri; rawHtml = request.Html is not null; stopped = false; retireBeforeNextNavigation = false;
         navigationClient?.SetContent(request.LocalContent);
         loading = true;
         if (request.Html is { } html)
@@ -143,7 +147,12 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
         if (Current && callbacks.NavigationStarting(id, uri, false) && Current)
         { expectedUri = uri; loading = true; view?.Reload(); }
     }
-    public void Stop() { stopped = true; loading = false; if (Current) view?.StopLoading(); }
+    public void Stop()
+    {
+        retireBeforeNextNavigation |= loading;
+        stopped = true; loading = false;
+        if (Current) view?.StopLoading();
+    }
     private void ReplaceInterruptedBrowser()
     {
         Cleanup();
@@ -240,6 +249,7 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
         var uri = ParseUri(url);
         if (!rawHtml && expectedUri is not null && uri != expectedUri) return;
         stopped = true;
+        retireBeforeNextNavigation = true; // Commit before failure observers can synchronously recover.
         loading = false;
         callbacks.NavigationFailed(id, rawHtml ? null : uri, AndroidWebViewPolicy.MapError(error));
     }
