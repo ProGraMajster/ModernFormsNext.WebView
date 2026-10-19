@@ -1,5 +1,11 @@
 # Experimental public API
 
+`NewWindowPolicy`, `NewWindowRequested`, `CloseRequested` and `SecurityWarning` add
+[explicit native popup handoff](new-window-policy.md). Defaults stay Deny. Optional
+peer/client contracts preserve existing adapters and the two-argument WebViewSettings
+constructor/deconstruction; unsupported nondefault settings fail explicitly.
+The full [configuration inventory](security-options-roadmap.md) marks proposals separately.
+
 `WebView : NativeViewHost` exposes Source (Uri?), SourceAddress (string Designer adapter),
 CanGoBack, CanGoForward, IsLoading, IsInitialized, InitializationState, BrowserCapabilities,
 IsJavaScriptEnabled and UserAgent. Runtime state is hidden from Designer serialization.

@@ -6,8 +6,8 @@ using ModernFormsNext.WindowKit.Threading;
 
 namespace ModernFormsNext.WebView.Windows;
 
-internal sealed class WindowsWebViewPeer(WindowsWebViewProvider provider, WindowsNativeViewSite site,
-    IWebViewPeerClient client) : IWebViewPeer, IWebViewLocalContentPolicyPeer, IWebViewNavigationFilterPeer
+internal sealed partial class WindowsWebViewPeer(WindowsWebViewProvider provider, WindowsNativeViewSite site,
+    IWebViewPeerClient client) : IWebViewPeer, IWebViewLocalContentPolicyPeer, IWebViewNavigationFilterPeer, IWebViewNewWindowPeer
 {
     private CoreWebView2Controller? controller;
     private CoreWebView2? core;
@@ -62,23 +62,12 @@ internal sealed class WindowsWebViewPeer(WindowsWebViewProvider provider, Window
                 if (candidate is null) return;
                 if (!Current) { candidate.Close(); candidate = null; return; }
                 controller = candidate; candidate = null; core = controller.CoreWebView2;
+                popupEnvironment = environment;
                 defaultUserAgent = core.Settings.UserAgent;
                 controller.Bounds = new Rectangle(0, 0, size.Width, size.Height);
                 controller.IsVisible = true;
                 Subscribe(); ApplySettings(settings);
-                try
-                {
-                    // Document includes top-level pages, subframes and dedicated workers.
-                    // CSP disables workers; registering shared/service workers on every peer
-                    // would incorrectly dispatch their requests to several controllers.
-                    // The glob is only a performance prefilter (it can also match query
-                    // text); ResourceRequested independently verifies the parsed host.
-                    core.AddWebResourceRequestedFilter("*://*mfn-app.invalid*", CoreWebView2WebResourceContext.All,
-                        CoreWebView2WebResourceRequestSourceKinds.Document);
-                    SupportsLocalContent = true;
-                }
-                catch (NotImplementedException) { SupportsLocalContent = false; }
-                catch (System.Runtime.InteropServices.COMException) { SupportsLocalContent = false; }
+                InstallLocalResolver();
                 bridgeScriptId = await core.AddScriptToExecuteOnDocumentCreatedAsync(BridgeScript);
                 if (!Current) return;
                 // Observer exceptions belong to the normal dispatcher policy, outside the
@@ -132,6 +121,7 @@ internal sealed class WindowsWebViewPeer(WindowsWebViewProvider provider, Window
     public void Navigate(WebViewNavigationRequest request)
     {
         if (!Current || core is null) return;
+        popupTargetUsed = true;
         Commands.Submit(request, () =>
         {
             string token = messages.Prepare(request.Id);
@@ -157,6 +147,7 @@ internal sealed class WindowsWebViewPeer(WindowsWebViewProvider provider, Window
     public async Task<string> ExecuteScriptAsync(string script, CancellationToken token)
     {
         if (!Current || core is null) throw new WebViewOperationException(WebViewErrorCategory.Engine);
+        popupTargetUsed = true;
         try { return await core.ExecuteScriptAsync(script).WaitAsync(token); }
         catch (OperationCanceledException) { throw; }
         catch { throw new WebViewOperationException(WebViewErrorCategory.Engine); }
@@ -165,6 +156,7 @@ internal sealed class WindowsWebViewPeer(WindowsWebViewProvider provider, Window
     {
         token.ThrowIfCancellationRequested();
         if (!Current || core is null) throw new WebViewOperationException(WebViewErrorCategory.Engine);
+        popupTargetUsed = true;
         try { core.PostWebMessageAsString(message); return Task.CompletedTask; }
         catch { throw new WebViewOperationException(WebViewErrorCategory.Engine); }
     }
@@ -192,6 +184,7 @@ internal sealed class WindowsWebViewPeer(WindowsWebViewProvider provider, Window
                 // Native/user Starting may enqueue another command in an observer.
                 // Only acknowledge the command captured before notifying that observer.
                 Commands.Acknowledge(submitted.Id);
+                if (preparedPopupId == submitted.Id) preparedPopupId = null;
             }
         }
     }
@@ -269,7 +262,6 @@ internal sealed class WindowsWebViewPeer(WindowsWebViewProvider provider, Window
         e.Response = browserCore.Environment.CreateWebResourceResponse(response.OpenRead(), response.StatusCode,
             response.StatusCode == 200 ? "OK" : "Local resource unavailable", headers);
     }
-    private void NewWindow(object? sender, CoreWebView2NewWindowRequestedEventArgs e) => e.Handled = true;
     private void Download(object? sender, CoreWebView2DownloadStartingEventArgs e) => e.Cancel = true;
     private void MoveFocus(object? sender, CoreWebView2MoveFocusRequestedEventArgs e)
     {
@@ -282,6 +274,7 @@ internal sealed class WindowsWebViewPeer(WindowsWebViewProvider provider, Window
         core!.NavigationStarting += Starting; core.NavigationCompleted += Completed;
         core.HistoryChanged += HistoryChanged; core.WebMessageReceived += Message;
         core.PermissionRequested += Permission; core.NewWindowRequested += NewWindow;
+        core.WindowCloseRequested += CloseWindow;
         core.DownloadStarting += Download; controller!.MoveFocusRequested += MoveFocus;
         core.WebResourceRequested += ResourceRequested;
     }
@@ -297,6 +290,7 @@ internal sealed class WindowsWebViewPeer(WindowsWebViewProvider provider, Window
                 previousCore.NavigationStarting -= Starting; previousCore.NavigationCompleted -= Completed;
                 previousCore.HistoryChanged -= HistoryChanged; previousCore.WebMessageReceived -= Message;
                 previousCore.PermissionRequested -= Permission; previousCore.NewWindowRequested -= NewWindow;
+                previousCore.WindowCloseRequested -= CloseWindow;
                 previousCore.DownloadStarting -= Download;
                 previousCore.WebResourceRequested -= ResourceRequested;
                 if (bridgeScriptId is not null) previousCore.RemoveScriptToExecuteOnDocumentCreated(bridgeScriptId);
@@ -306,7 +300,7 @@ internal sealed class WindowsWebViewPeer(WindowsWebViewProvider provider, Window
         {
             if (previous is not null) { previous.MoveFocusRequested -= MoveFocus; previous.Close(); }
             bridgeScriptId = null; navigations.Clear(); commands?.Clear();
-            localContent = null; SupportsLocalContent = false;
+            localContent = null; SupportsLocalContent = false; popupEnvironment = null; preparedPopupId = null;
         }
     }
     public void Dispose() { if (disposed) return; disposed = true; CloseController(); }

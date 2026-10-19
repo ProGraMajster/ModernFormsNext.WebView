@@ -7,7 +7,7 @@ using Browser = global::Android.Webkit.WebView;
 
 namespace ModernFormsNext.WebView.Android;
 
-internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPeerClient client) : IWebViewPeer, IWebViewLocalContentPolicyPeer, IWebViewNavigationFilterPeer
+internal sealed partial class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPeerClient client) : IWebViewPeer, IWebViewLocalContentPolicyPeer, IWebViewNavigationFilterPeer, IWebViewNewWindowPeer
 {
     public bool SupportsLocalContent => Current && view is not null;
     public bool SupportsLocalContentPolicy => SupportsLocalContent;
@@ -54,7 +54,7 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
             view.Settings.SetSupportMultipleWindows(true);
             view.Settings.JavaScriptCanOpenWindowsAutomatically = false;
             view.Settings.MediaPlaybackRequiresUserGesture = true;
-            navigationClient = new NavigationClient(this, ++browserGeneration); chromeClient = new ChromeClient();
+            navigationClient = new NavigationClient(this, ++browserGeneration); chromeClient = new ChromeClient(this, browserGeneration);
             view.SetWebViewClient(navigationClient); view.SetWebChromeClient(chromeClient);
             attachment = new AndroidViewPeer(site, view, ownsView: false);
             ApplySettings(value);
@@ -81,6 +81,7 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
         if (view is null || !Current) return;
         view.Settings.JavaScriptEnabled = value.IsJavaScriptEnabled;
         view.Settings.UserAgentString = value.UserAgent ?? defaultUserAgent;
+        view.Settings.JavaScriptCanOpenWindowsAutomatically = (int)value.NewWindowPolicy == 2;
         if (value.IsJavaScriptEnabled && bridge is null)
         {
             bridge = new MessageBridge(this, browserGeneration);
@@ -114,6 +115,7 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
     public void Navigate(WebViewNavigationRequest request)
     {
         if (!Current || view is null) return;
+        popupTargetUsed = true;
         long previousId = id;
         id = request.Id;
         if (!callbacks.NavigationStarting(id, request.Uri, false) || !Current || id != request.Id) return;
@@ -165,7 +167,7 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
             view.Settings.SetSupportMultipleWindows(true);
             view.Settings.JavaScriptCanOpenWindowsAutomatically = false;
             view.Settings.MediaPlaybackRequiresUserGesture = true;
-            navigationClient = new NavigationClient(this, ++browserGeneration); chromeClient = new ChromeClient();
+            navigationClient = new NavigationClient(this, ++browserGeneration); chromeClient = new ChromeClient(this, browserGeneration);
             view.SetWebViewClient(navigationClient); view.SetWebChromeClient(chromeClient);
             attachment = new AndroidViewPeer(site, view, ownsView: false);
             attachment.Resize(contentSize); ApplySettings(settings);
@@ -182,6 +184,7 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
     {
         token.ThrowIfCancellationRequested();
         if (!Current || view is null) throw new WebViewOperationException(WebViewErrorCategory.Engine);
+        popupTargetUsed = true;
         var evaluation = new Evaluation(this, token); evaluations.Add(evaluation);
         try { view.EvaluateJavascript(script, evaluation); }
         catch { evaluation.Fail(); }
@@ -193,6 +196,7 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
     private bool Override(Uri? uri)
     {
         if (!Current) return true;
+        awaitingInitialPopup = false;
         // A URI leaving raw HTML is a new document, including a link/meta refresh
         // during its load. Do not normalize its destination as the raw HTML's private URL.
         bool redirect = !rawHtml && !stopped && loading && id != 0;
@@ -204,6 +208,7 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
     private void Started(string? url)
     {
         if (!Current || stopped) return;
+        awaitingInitialPopup = false;
         var uri = ParseUri(url);
         if (!loading || id == 0)
         {
@@ -235,6 +240,7 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
     private void Finished(string? url)
     {
         if (!Current || stopped || view is null) return;
+        awaitingInitialPopup = false;
         Uri? uri = rawHtml ? null : ParseUri(url);
         if (!rawHtml && expectedUri is not null && uri != expectedUri) return;
         long originalId = id;
@@ -257,6 +263,10 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
     private void Cleanup()
     {
         ++browserGeneration; // Revoke native callbacks before detaching/destroying the browser.
+        preparedPopupId = null; openedPopup = awaitingInitialPopup = false;
+        // Native owns outstanding JNI callback references until delivery; generation
+        // revocation above makes them inert. Do not dispose a callback still in flight.
+        popupVisualStates.Clear();
         navigationClient?.Retire();
         var previous = view; view = null;
         try
@@ -335,12 +345,18 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
             if (Current && !owner.rawHtml && ParseUri(error?.Url) == ParseUri(view?.Url)) owner.Failed(error?.Url, -11);
         }
     }
-    private sealed class ChromeClient : WebChromeClient
+    private sealed class ChromeClient(AndroidWebViewPeer owner, long generation) : WebChromeClient
     {
         public override void OnPermissionRequest(PermissionRequest? request) => request?.Deny();
         public override void OnGeolocationPermissionsShowPrompt(string? origin, GeolocationPermissions.ICallback? callback)
             => callback?.Invoke(origin, false, false);
-        public override bool OnCreateWindow(Browser? view, bool isDialog, bool isUserGesture, global::Android.OS.Message? resultMsg) => false;
+        public override bool OnCreateWindow(Browser? view, bool isDialog, bool isUserGesture, global::Android.OS.Message? resultMsg)
+            => owner.Current && generation == owner.browserGeneration && owner.CreateWindow(isUserGesture, resultMsg);
+        public override void OnCloseWindow(Browser? window)
+        {
+            if (owner.Current && generation == owner.browserGeneration && owner.openedPopup && owner.callbacks is IWebViewNewWindowPeerClient callback)
+                callback.CloseRequested(owner.id);
+        }
         public override bool OnShowFileChooser(Browser? webView, IValueCallback? filePathCallback, FileChooserParams? fileChooserParams)
         { filePathCallback?.OnReceiveValue(null); return true; }
     }

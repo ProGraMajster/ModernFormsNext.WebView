@@ -10,8 +10,9 @@ internal static class Program
         WindowsPlatformBootstrap.Initialize();
         bool keyboard = args.Contains("--validate-keyboard", StringComparer.Ordinal);
         bool desktop = args.Contains("--validate-desktop", StringComparer.Ordinal);
+        bool popup = args.Contains("--validate-popup", StringComparer.Ordinal);
         bool securityOnly = args.Contains("--validate-security", StringComparer.Ordinal);
-        bool validate = keyboard || desktop || securityOnly || args.Contains("--validate", StringComparer.Ordinal);
+        bool validate = popup || keyboard || desktop || securityOnly || args.Contains("--validate", StringComparer.Ordinal);
         string? profile = validate ? System.IO.Path.Combine(System.IO.Path.GetTempPath(), "mfn-webview-" + Guid.NewGuid().ToString("N")) : null;
         WindowsWebViewProvider.Register(new WindowsWebViewOptions { UserDataFolder = profile });
         using var form = new SampleForm();
@@ -19,6 +20,12 @@ internal static class Program
         {
             try
             {
+                if (popup)
+                {
+                    await NewWindowRuntimeValidation.RunAsync(form, Console.WriteLine,
+                        args.Contains("--popup-gesture", StringComparer.Ordinal) ? NativeKeyboardValidation.PopupEnterAsync : null);
+                    Console.WriteLine("POPUP PASS"); return;
+                }
                 if (securityOnly) await RuntimeValidation.ReadyAsync(form.Browser);
                 else await RuntimeValidation.RunAsync(form, Console.WriteLine);
                 await DefaultSecurityRuntimeValidation.RunAsync(form.Browser, Console.WriteLine);

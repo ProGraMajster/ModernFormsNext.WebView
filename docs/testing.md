@@ -1,5 +1,14 @@
 # Build and qualification
 
+For #46 popup configuration, run `scripts/test-security-consumer.ps1` for both frozen
+snapshots (four external compiler cases in Debug/Release). Run Windows sample
+`--validate-popup` and Android driver `-Mode Popup`; Android injects Enter only after
+checking the sample owns the selected device's foreground window. Windows optional
+`--popup-gesture` uses the existing guarded native keyboard injector. Run the ordinary
+full/native/default-security regression lanes separately. See [popup semantics and
+limits](new-window-policy.md), [options inventory](security-options-roadmap.md) and
+[broader platform qualification](native-platform-qualification.md).
+
 The [native platform qualification](native-platform-qualification.md) adds explicit-serial
 Android Floor/lifecycle and owned TLS/default-security drivers, real Windows DPI/input
 and VS Designer evidence, and retained failures. Consult its limits before acceptance.

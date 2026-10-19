@@ -12,17 +12,24 @@ public sealed class MainActivity : AndroidWindowActivity
     {
         var form = new SampleForm();
         bool floor = Intent?.GetBooleanExtra("validate-floor", false) == true;
+        bool popup = Intent?.GetBooleanExtra("validate-popup", false) == true;
         bool lifecycle = Intent?.GetBooleanExtra("validate-lifecycle", false) == true;
         bool nativeBack = Intent?.GetBooleanExtra("validate-back", false) == true;
         string? runId = Intent?.GetStringExtra("validation-run-id");
         string? tlsProbe = Intent?.GetStringExtra("validation-tls-uri");
-        bool validate = floor || lifecycle || Intent?.GetBooleanExtra("validate", false) == true;
+        bool validate = popup || floor || lifecycle || Intent?.GetBooleanExtra("validate", false) == true;
         if (validate)
             form.Shown += async (_, _) =>
             {
                 try
                 {
                     global::Android.Util.Log.Info("MFNWebView", "RUN START " + runId);
+                    if (popup)
+                    {
+                        await NewWindowRuntimeValidation.RunAsync(form, m => global::Android.Util.Log.Info("MFNWebView", m), () =>
+                        { global::Android.Util.Log.Info("MFNWebView", "POPUP GESTURE WAIT"); return Task.CompletedTask; });
+                        global::Android.Util.Log.Info("MFNWebView", "POPUP PASS"); return;
+                    }
                     if (floor)
                     {
                         await BaselineFloorRuntimeValidation.RunAsync(form, m => global::Android.Util.Log.Info("MFNWebView", m));
@@ -87,5 +94,6 @@ public sealed class MainActivity : AndroidWindowActivity
     { try { base.OnDestroy(); } finally { if (IsValidation) global::Android.Util.Log.Info("MFNWebView", "Activity destroyed"); } }
 
     private bool IsValidation => Intent?.GetBooleanExtra("validate", false) == true ||
+        Intent?.GetBooleanExtra("validate-popup", false) == true ||
         Intent?.GetBooleanExtra("validate-floor", false) == true || Intent?.GetBooleanExtra("validate-lifecycle", false) == true;
 }

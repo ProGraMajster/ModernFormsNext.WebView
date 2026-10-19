@@ -89,6 +89,11 @@ internal static class NativeKeyboardValidation
             : [Key(0x09, false), Key(0x09, true)];
         Inject(keys);
     }
+    internal static Task PopupEnterAsync()
+    {
+        Inject([Key(0x0D, false), Key(0x0D, true)]); // Existing foreground ownership guard applies.
+        return Task.CompletedTask;
+    }
     private static void Inject(Input[] keys)
     {
         GetWindowThreadProcessId(GetForegroundWindow(), out uint owner);

@@ -85,8 +85,10 @@ permission; Android AddJavascriptInterface still does not authenticate the origi
 ## Native defaults and persistence
 
 Permissions default to denied (Android includes geolocation and file chooser). No camera,
-microphone or location permission is added to the sample manifest. New windows are suppressed;
-they are not opened in external applications. Windows downloads are canceled. Android has no
+microphone or location permission is added to the sample manifest. New windows default to
+suppressed. [Explicit popup handoff](new-window-policy.md) requires a fresh owned target;
+script-popup opt-in warns with MFNWVSEC001. No external application opens automatically.
+Windows downloads are canceled. Android has no
 download listener/service, so the adapter performs no automatic saving or external launch.
 DevTools and native host-object exposure are disabled on Windows; Android remote debugging is
 not enabled by this adapter. Browser debugging tools remain outside the baseline API.

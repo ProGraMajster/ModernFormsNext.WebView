@@ -11,9 +11,11 @@ Windows uses official Microsoft WebView2 Core APIs. Android uses platform
 `android.webkit.WebView`, with API 23 as its minimum. The experimental implementation includes
 URI/raw HTML navigation, back/forward/reload/stop, neutral events, cancellation,
 explicit JSON-result scripting, string messaging, user agent settings and diagnostics.
-JavaScript is disabled by default. Cookies/headers APIs, permission UX, downloads,
-new-window management and DevTools remain future work; permissions and new windows
-are denied and downloads are not saved automatically.
+JavaScript is disabled by default. Cookies/headers APIs, permission UX, configurable
+downloads and DevTools remain future work; downloads are not saved automatically.
+[Explicit popup handoff](docs/new-window-policy.md) defaults to Deny. The higher-risk
+script-popup opt-in emits real consumer compiler/runtime diagnostic MFNWVSEC001.
+See the [implemented/proposed options matrix](docs/security-options-roadmap.md).
 
 Phase 2 adds [experimental local resources](docs/local-content.md): explicitly public,
 immutable HTML/CSS/JS/images at an isolated HTTPS origin, restrictive default CSP and native request

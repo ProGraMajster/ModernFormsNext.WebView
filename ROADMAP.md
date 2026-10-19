@@ -113,8 +113,11 @@ extend the canonical immutable catalog with None/Self selectors and an explicit 
 profile. [API/effects/risks/examples](docs/local-content-policy.md) retain the exact default
 CSP and reject nondefault policy on unsupported peers. Self connections/base permit a new
 controlled #22 asset experiment; they do not authorize IPC or full #23–#31.
-[#46](https://github.com/ProGraMajster/ModernFormsNext.WebView/issues/46) tracks later
-platform controls/qualification, without a global disable switch or all-options rewrite.
+[#46](https://github.com/ProGraMajster/ModernFormsNext.WebView/issues/46) remains OPEN/PARTIAL.
+Its first [explicit popup increment](docs/new-window-policy.md) preserves default Deny,
+adds a fresh application-owned target and MFNWVSEC001 consumer/runtime warnings.
+The [complete options inventory](docs/security-options-roadmap.md) separates implemented
+contracts from proposed download/permission/TLS/profile controls. There is no global disable switch.
 The next ordered increments are controlled Blazor A-assets/B-IPC research, a bounded
 Hybrid trust experiment and an independent baseline #7 readiness checklist. No new PR
 from these increments may merge automatically, and no package/release is authorized.
