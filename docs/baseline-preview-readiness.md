@@ -1,5 +1,10 @@
 # Independent baseline preview/stable readiness (#7/#8)
 
+The [2026-10-19 native continuation](native-platform-qualification.md) supersedes the
+source-development snapshot below with frozen `2b7467c4443acfedfcff5a9e4eb42bfbeb8c6d31`.
+It records executed modern-device/Windows qualification and retained API23 history/frame,
+Windows return-Tab/restore and Designer limits. Those results do not unlock preview.
+
 Assessment date: 2026-10-18. **Development via pinned current-master snapshot;
 package alignment deferred until official ModernFormsNext 1.12.0.**
 Preview is **NOT READY — waiting for official ModernFormsNext 1.12.0 and release

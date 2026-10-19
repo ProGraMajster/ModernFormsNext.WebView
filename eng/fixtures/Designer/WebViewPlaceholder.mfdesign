@@ -1,0 +1,23 @@
+{
+  "metadata": { "formatVersion": 1, "toolName": "ModernFormsNext.WebView native qualification fixture" },
+  "namespace": "WebViewDesignerQualification",
+  "className": "WebViewPlaceholder",
+  "formName": "WebViewPlaceholder",
+  "size": { "width": 720, "height": 480 },
+  "events": {},
+  "controls": [
+    {
+      "typeName": "ModernFormsNext.WebView.WebView",
+      "name": "browser",
+      "bounds": { "x": 24, "y": 24, "width": 650, "height": 360 },
+      "memberVisibility": "private",
+      "properties": {
+        "Text": "WebView — design time placeholder",
+        "SourceAddress": "https://network-must-not-start.invalid/",
+        "IsJavaScriptEnabled": true
+      },
+      "events": {},
+      "children": []
+    }
+  ]
+}

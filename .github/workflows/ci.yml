@@ -71,6 +71,13 @@ jobs:
         run: dotnet build samples/ModernFormsNext.WebView.Sample.Windows -c Release --no-restore -m:1 -p:UseSharedCompilation=false -p:GeneratePackageOnBuild=false -p:ModernFormsNextSourceRoot=${{ github.workspace }}/framework
       - name: Test Windows adapter queue
         run: dotnet test tests/ModernFormsNext.WebView.Windows.Tests -c Release -m:1 -p:UseSharedCompilation=false -p:GeneratePackageOnBuild=false -p:ModernFormsNextSourceRoot=${{ github.workspace }}/framework
+      - name: Build owned native security fixture
+        shell: pwsh
+        run: |
+          foreach ($configuration in @('Debug','Release')) {
+            dotnet build eng/fixtures/LoopbackSecurity -c $configuration -m:1 -p:UseSharedCompilation=false -p:GeneratePackageOnBuild=false -warnaserror -p:ModernFormsNextSourceRoot=${{ github.workspace }}/framework
+            if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          }
       - name: Build isolated Blazor feasibility probe
         run: dotnet build research/BlazorFeasibility.Windows -c Release -m:1 -p:UseSharedCompilation=false -p:GeneratePackageOnBuild=false -p:ModernFormsNextSourceRoot=${{ github.workspace }}/framework
       - name: Validate Razor and public WebViewManager contracts without native UI

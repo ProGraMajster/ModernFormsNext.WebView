@@ -1,5 +1,7 @@
 # Experimental WebView baseline
 
+- [Native platform qualification, accepted PR audits and remaining limits](native-platform-qualification.md)
+
 - [Next-phase delivery, merge audit and recorded development snapshots](next-phase-delivery-report.md)
 
 - [Security-policy/Blazor/world delivery history and subsequent audit](security-policy-development-report.md)

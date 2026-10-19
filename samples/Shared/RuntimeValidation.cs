@@ -125,6 +125,13 @@ internal static class RuntimeValidation
             var temporary = form.Controls.Add(new WebView { Bounds = new(2, 2, 80, 60), IsJavaScriptEnabled = true });
             try { await ReadyAsync(temporary); await NavigateAsync(temporary, () => temporary.NavigateToHtml("<p>lease</p>")); }
             finally { form.Controls.Remove(temporary); temporary.Dispose(); }
+            if ((i + 1) % 10 == 0)
+            {
+                using var process = System.Diagnostics.Process.GetCurrentProcess();
+                report("MEMORY bounded leases=" + (i + 1) + " managed=" + GC.GetTotalMemory(false) +
+                    " private=" + process.PrivateMemorySize64 + " workingSet=" + process.WorkingSet64 +
+                    "; observation only, not a heap-retention proof");
+            }
         }
         Require(browser.GetDiagnostics().PeerGeneration == generation, "independent leases preserve active peer");
         report("PASS 50 sequential real browser create/dispose leases");

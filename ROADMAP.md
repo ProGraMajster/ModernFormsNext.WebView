@@ -1,5 +1,10 @@
 # Roadmap
 
+The [native qualification continuation](docs/native-platform-qualification.md) records
+API23 Floor versus modern RPC, actual Activity/device testing, default security, real
+100%/225% monitors and remaining Windows input/restore/Designer failures. These do not
+unlock preview, privileged Hybrid handlers or automatic merging of new PRs.
+
 Main framework NativeViewHost: **DONE externally**, through ModernFormsNext #60 / PR #197.
 WebView implementation: **IN DEVELOPMENT / EXPERIMENTAL**. The baseline has completed
 implementation review; [the review report](docs/final-review.md) lists fixes and qualification

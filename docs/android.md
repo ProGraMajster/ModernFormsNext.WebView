@@ -29,7 +29,13 @@ browser session guarantee is made. Background/resume uses the existing presentat
 On overlapping programmatic navigation, Android's callbacks lack native request IDs. The adapter
 revokes and destroys the interrupted browser content instance in the same framework container
 before creating fresh content. This resets history for that case, rather than attributing an old
-callback to the latest request. Completed sequential navigation uses the normal native history.
+callback to the latest request. The same retirement is required before the next explicit
+navigation after a failed load or Stop during loading: Android can still queue an error-page
+Started/Finished callback after reporting a certificate error. The flag is committed before
+failure observers may recover synchronously. Such recovery resets history too. Stop on an
+already completed page does not by itself require native browser replacement. Completed
+sequential navigation uses the normal native history. This is not a claim that native
+callbacks identify documents or that every history/reload-after-failure path is qualified.
 Generation guards also apply to the old WebViewClient and bridge; no second host lifecycle is created.
 
 Programmatic URI/raw HTML requests receive a shared cancelable preflight before native loading.

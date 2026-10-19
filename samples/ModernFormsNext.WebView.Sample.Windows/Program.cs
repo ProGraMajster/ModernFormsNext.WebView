@@ -9,7 +9,9 @@ internal static class Program
     {
         WindowsPlatformBootstrap.Initialize();
         bool keyboard = args.Contains("--validate-keyboard", StringComparer.Ordinal);
-        bool validate = keyboard || args.Contains("--validate", StringComparer.Ordinal);
+        bool desktop = args.Contains("--validate-desktop", StringComparer.Ordinal);
+        bool securityOnly = args.Contains("--validate-security", StringComparer.Ordinal);
+        bool validate = keyboard || desktop || securityOnly || args.Contains("--validate", StringComparer.Ordinal);
         string? profile = validate ? System.IO.Path.Combine(System.IO.Path.GetTempPath(), "mfn-webview-" + Guid.NewGuid().ToString("N")) : null;
         WindowsWebViewProvider.Register(new WindowsWebViewOptions { UserDataFolder = profile });
         using var form = new SampleForm();
@@ -17,12 +19,28 @@ internal static class Program
         {
             try
             {
-                await RuntimeValidation.RunAsync(form, Console.WriteLine);
-                await WindowsMessagingValidation.RunAsync(form.Browser);
-                await ValidateInitializationRacesAsync(form);
+                if (securityOnly) await RuntimeValidation.ReadyAsync(form.Browser);
+                else await RuntimeValidation.RunAsync(form, Console.WriteLine);
+                await DefaultSecurityRuntimeValidation.RunAsync(form.Browser, Console.WriteLine);
+                string? tlsProbe = Environment.GetEnvironmentVariable("MFN_QA_TLS_URI");
+                if (tlsProbe is not null) await DefaultSecurityRuntimeValidation.TlsAsync(form.Browser, new Uri(tlsProbe), Console.WriteLine);
+                string? downloadProbe = Environment.GetEnvironmentVariable("MFN_QA_DOWNLOAD_URI");
+                if (downloadProbe is not null)
+                {
+                    var address = new Uri(downloadProbe);
+                    RuntimeValidation.Require(address.Scheme == "http" && address.Host == "127.0.0.1", "owned download fixture only");
+                    form.Browser.Navigate(address);
+                    await Task.Delay(1000);
+                    Console.WriteLine("DOWNLOAD attempted; driver must prove server request and bounded no-file result");
+                    await RuntimeValidation.NavigateAsync(form.Browser, () => form.Browser.NavigateToHtml("<p>Download denial recovery</p>"));
+                }
                 // Keyboard injection requires an interactive foreground desktop. Keep it
                 // explicit so ordinary native validation can run from background tools.
+                if (desktop) await NativeDesktopValidation.RunAsync(form);
                 if (keyboard) await NativeKeyboardValidation.RunAsync(form);
+                if (securityOnly) { Console.WriteLine("RUNTIME PASS (focused native security/desktop lane)"); return; }
+                await WindowsMessagingValidation.RunAsync(form.Browser);
+                await ValidateInitializationRacesAsync(form);
                 await using var server = new LoopbackContentServer();
                 await MessageSecurityRuntimeValidation.RunNetworkAsync(form.Browser, server.Address("security/redirect"),
                     new Uri(server.Address("security/frame").AbsoluteUri.Replace("127.0.0.1", "localhost", StringComparison.Ordinal)), Console.WriteLine);
