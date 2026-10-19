@@ -15,6 +15,7 @@ consumes it without defining another hosting or platform service system.
 - [Security and content policy](security.md)
 - [Local public resources and platform decision](local-content.md)
 - [Explicit typed local policy API, effects/risks/support and examples](local-content-policy.md)
+- [Per-view navigation schemes, capabilities and security-control inventory](navigation-scheme-filter.md)
 - [Hybrid trust matrix and prerequisites](hybrid-security.md)
 - [Hybrid whole-realm trust strategy, platform/world alternatives and acceptance gates](hybrid-trust-strategy.md)
 - [Baseline messaging native verification (#33)](issue33-security-validation.md)

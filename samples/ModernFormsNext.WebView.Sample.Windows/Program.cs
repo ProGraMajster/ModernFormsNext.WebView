@@ -28,9 +28,13 @@ internal static class Program
                     new Uri(server.Address("security/frame").AbsoluteUri.Replace("127.0.0.1", "localhost", StringComparison.Ordinal)), Console.WriteLine);
                 await NavigationRuntimeValidation.RunAsync(form.Browser, server.Address("one"), server.Address("two"), Console.WriteLine);
                 await NavigationRuntimeValidation.RunPostAsync(form.Browser, server.Address("post"), Console.WriteLine);
+                await NavigationSchemeRuntimeValidation.RunPostAsync(form.Browser, server.Address("post"), Console.WriteLine);
+                await NavigationSchemeRuntimeValidation.RunRedirectAsync(form.Browser, server.Address("scheme/redirect"), Console.WriteLine);
                 await ValidateInitializationFailureAsync(form);
                 using var second = new ModernFormsNext.Form { UseSystemDecorations = true };
                 second.Show();
+                form.Browser.AllowedNavigationSchemes = ModernFormsNext.WebView.WebViewNavigationSchemes.Https |
+                    ModernFormsNext.WebView.WebViewNavigationSchemes.AboutBlank;
                 await RuntimeValidation.NavigateAsync(form.Browser, () => form.Browser.NavigateToLocalContent(LocalContentSample.Create()));
                 using var reparentTransport = new ModernFormsNext.WebView.WebViewTransport(form.Browser);
                 using var reparentRpc = new ModernFormsNext.WebView.WebViewRpcClient(reparentTransport);
@@ -47,6 +51,11 @@ internal static class Program
                     "same RPC client recovers after real native host recreation and explicit endpoint installation");
                 Console.WriteLine("PASS pending RPC canceled by real cross-window host retirement + same-client recovery");
                 RuntimeValidation.Require(form.Browser.GetDiagnostics().PeerGeneration > before, "cross-window peer recreated");
+                RuntimeValidation.Require(form.Browser.AllowedNavigationSchemes == (ModernFormsNext.WebView.WebViewNavigationSchemes.Https |
+                    ModernFormsNext.WebView.WebViewNavigationSchemes.AboutBlank) &&
+                    form.Browser.BrowserCapabilities.HasFlag(ModernFormsNext.WebView.WebViewCapabilities.NavigationSchemeFiltering),
+                    "scheme policy and detected capability survive real cross-window peer recreation");
+                Console.WriteLine("PASS scheme filter preserved across real cross-window recreation");
                 RuntimeValidation.Require(!form.Browser.CanGoBack && !form.Browser.CanGoForward, "recreation resets browser history");
                 await RuntimeValidation.NavigateAsync(form.Browser, () =>
                 { form.Controls.Add(form.Browser); form.Controls.SetChildIndex(form.Browser, 0); });

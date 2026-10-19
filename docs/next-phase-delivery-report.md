@@ -117,6 +117,114 @@ The [development PR51](https://github.com/ProGraMajster/ModernFormsNext.WebView/
 remains OPEN against main; its final delivered SHA/terminal CI are recorded in the PR
 description after the last report commit. No new PR is automatically merged.
 
+Final #51 delivery:4c76107097344fa9f27ffa6b0a3b74068f5ed396. Both exact-head
+[push39146423726](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39146423726)
+and [PR39146427487](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39146427487)
+are terminal SUCCESS in all six jobs. The final clean-head Windows consumer also passed
+Debug/Release and recorded dirty=false (artifacts/source-consumers/207792861fc84c00abbd641d4d55f0b9).
+This result was verified before starting the dependent #46 increment.
+
+## One implemented #46 increment
+
+The separate [navigation-scheme PR52](https://github.com/ProGraMajster/ModernFormsNext.WebView/pull/52)
+is based on final #51; both new PRs remain OPEN.
+WebView.AllowedNavigationSchemes is per-instance UI-thread state with flags None=0,
+Http=1, Https=2, AboutBlank=4, Default=7. Default/static ValidateUri/CSP bytes and old
+IWebViewPeer/settings/request constructors remain compatible. App URI checks run before
+native submission/token mutation; reported top-level violations precede public Starting,
+raise InvalidAddress and cancel document operations. Changed settings use existing Stop/
+request IDs/lifetime and survive native recreation. No extra host/focus/history/counter.
+
+Optional IWebViewNavigationFilterPeer detects installed hooks through capability
+NavigationSchemeFiltering: initialized Windows Core, Android API24+ active main-frame
+client; API23/older peers reject the nondefault option explicitly. Unsupported queued
+loads fail Engine without submission, ready changes/loads throw NotSupportedException,
+Reload/history return false. Default remains compatible. Raw HTML is separate, so None
+is not offline mode. Local catalog origin/CSP remains conjunctive. Re-enabling Http is
+an explicit higher-risk choice subject to OS cleartext/TLS rules. Complete option docs,
+safe/risky examples, future-control inventory and native matrix:
+[navigation-scheme-filter.md](navigation-scheme-filter.md).
+
+The implementation also fixes existing cancellation reentrancy at Submit/Stop/history/
+native-begin boundaries: only the captured canonical request may overwrite/stop/settle;
+callbacks submitting newer work win. Stop still executes cleanup when cancellation code
+throws. No new lifecycle identity or global setting is introduced.
+
+Debug deterministic243/243 shared tests passed, including47 added cases; original
+37 Windows/12 Android give292/292 overall. Native Debug Windows and API34 passed real
+main/same/opaque actors, typed callback denial, Stop/raw reload, None/raw distinction,
+HTTPS catalog and POST fallback. Windows additionally passed owned HTTP302 and actual
+cross-window policy/capability/RPC recovery. Initial fixture raw-string compilation
+errors and an immediate Task.IsCanceled timing assumption were corrected; final async
+assertion awaits bounded cancellation settlement, without skips or policy relaxation.
+The committed implementation is ba85b6387685e82d731884d5987e794e9cbb8a9e. Full
+current-master restore/sequential Debug/Release292/292 and native Windows/API34 both
+configurations passed, zero warnings/errors/skips (artifacts/navigation-final-current).
+Exact-head [push39148012175](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39148012175)
+and [PR39148093526](https://github.com/ProGraMajster/ModernFormsNext.WebView/actions/runs/39148093526)
+are terminal SUCCESS in all six jobs each. Historical69c5ea2 full restore/Debug/Release292/292
+and native Windows/API34 both configurations also passed, zero warnings/errors/skips
+(artifacts/navigation-final-historical). Subsequent report/platform-guide edits change no
+compiled source; final delivered SHA/terminal CI are recorded in the PR description.
+
+All four updated external source consumers passed restore/Debug/Release, with warnings
+treated as errors; Windows headless execution confirms Core/all native loaders/no UI
+wrappers. They compile the new public enum/optional interface as well as old contracts.
+Evidence under artifacts/source-consumers: CurrentMaster Windows1420ba7662454bedbe6168622d18418e,
+Androiddc84097e4e584f6480506eb5a723f728; HistoricalBaseline Windows6aa542f82c894859867f2d63f5dfcdf3,
+Androidc97e94a9375245f3987ee837c51ee328. Results identify ba85b638 and dirty=true because
+only platform/report Markdown edits were in progress; compiled product sources matched
+that implementation commit. Exact-head hosted CI uses clean explicit head checkouts.
+
+Fresh current7cfa Blazor Debug/Release builds/contracts, native Default/Application modes
+and profile cleanup passed (artifacts/navigation-blazor-current). Real AttachPage remains
+rejected, TryDispatch false, no managed page or privileged DI scope. Fresh current7cfa
+world Debug/Release build/native/profile cleanup passed (artifacts/navigation-world-current):
+positive real actor controls, DOM confused-deputy counterexample, live Stop and recorded
+packet rejection, actual302, same-URI reload and real host/context recreation. These
+research execution passes preserve interactive/privileged NO-GO. This is regression of
+existing fixtures, not implementation of the new planned trust experiment.
+
+Android POST may already have network effects. Android cross-scheme HTTP302 is NOT RUN
+(cleartext manifest retained); reported redirect unit coverage does not qualify all native
+redirects/providers. API23 runtime/control branch, physical devices and Android product
+Activity recreation remain NOT RUN. Scheme choice never authenticates a caller;
+IsOriginAuthenticated=false and absent AuthenticatedMessaging/privileged handlers remain.
+
+## One next trust experiment: plan only
+
+No additional research implementation is claimed. Blazor original assets/start can load
+under explicit Application CSP, but real AttachPage remains unauthorized/rejected and
+interactive/privileged DI/IPC remains NO-GO. Isolated-world binding separation alone
+failed the whole-realm argument because shared DOM can act as a confused deputy.
+Android AddJavascriptInterface never authenticates the original caller.
+
+The next bounded experiment is a Windows closed-program realm with an app-owned,
+one-use permit for a diagnostic IncrementOwnedCounter(delta=1) operation. It may not
+touch files/network/DI or add production handlers. The only positive invocation comes
+from a native app action with a permit bound to current canonical peer/document,
+operation/arguments and the engine-reported execution context. Merely possessing a
+binding, URL, public request ID or context label is insufficient.
+
+Before running it, audit the entire trusted program/call graph: no DOM read, DOM event,
+page-controlled callback/prototype/object, message or page-derived argument may influence
+the authorized call. Use engine-created/context-attributed execution and clear permits
+on document/context destruction, Stop, JS disable, recreation and disposal. Fail closed
+if context/lifetime attribution or program closure cannot be demonstrated.
+
+Attacker controls page main/same-origin/opaque frames, shared DOM and all page messages.
+Positive control: one app-authorized exact operation increments once. Negative controls:
+direct page binding attempts, DOM deputy commands, forged/wrong-context packets, wrong
+operation/arguments, replay/duplicate permit, stale document/context, redirect/same-URI
+reload, Stop/JS-disable/recreate/dispose. Each actor must positively execute, each rejected
+call leave the counter unchanged, then a fresh authorized positive call must still work.
+Keep provenance logs and distinguish live callbacks from deliberately replayed records.
+
+Decision today: NOT RUN/NO-GO until closure and operation authorization are proven.
+Even a passing diagnostic counter would qualify only that host-initiated experiment,
+not original Blazor AttachPage or general page-to-C# IPC. Actual research needs a
+separate project/PR. #15 stays OPEN/PARTIAL, #17/#13/#18 BLOCKED, #23–#31 incomplete.
+
 The expected negative official1.11.1 control proves only that old packages lack these
 new hosting contracts; it is not a bug, patch-release request or development blocker.
 The explicit-version official probe is retained unchanged. After actual1.12.0 publication,
@@ -128,7 +236,7 @@ tag alone is insufficient. See baseline-preview-readiness.md for the concrete ga
 
 ## Available evidence and missing qualification
 
-Environment: Windows host; SDK10.0.401; WebView2 SDK1.0.4258.31/runtime155.0.4283.62;
+Environment: Windows x64 host; SDK10.0.401; WebView2 SDK1.0.4258.31/runtime155.0.4283.62;
 JDK21.0.8; Android SDK/build tools36; emulator-5554 only, API34/x86_64,
 com.google.android.webview113.0.5672.136. No physical device or unrelated process/profile.
 Builds are sequential with -m:1, UseSharedCompilation=false, GeneratePackageOnBuild=false.
@@ -140,6 +248,8 @@ IME/DPI/accessibility, Designer integration, retained Activity/native/managed he
 full trim/AOT release qualification: NOT RUN. Fifty leases do not prove leak freedom;
 API34 does not prove API23. Hosted CI/headless checks are not native QA.
 Official1.12.0 package compatibility: NOT RUN until actual artifacts exist.
+Windows x86/arm64 native execution and other Android ABIs: NOT RUN; copied loader files
+are an asset check, not execution on those architectures.
 
 Repeatable product commands (then repeat using HistoricalBaseline with its matching root):
 
@@ -152,7 +262,8 @@ Repeatable product commands (then repeat using HistoricalBaseline with its match
     adb -s emulator-5554 install -r ./samples/ModernFormsNext.WebView.Sample.Android/bin/Debug/net10.0-android/com.programajster.modernformsnext.webview.sample-Signed.apk
     adb -s emulator-5554 shell am force-stop com.programajster.modernformsnext.webview.sample
     adb -s emulator-5554 shell am start -n com.programajster.modernformsnext.webview.sample/.MainActivity --ez validate true
-    adb -s emulator-5554 logcat -d --pid=SELECTED_SAMPLE_PID -s MFNWebView:I
+    $samplePid = adb -s emulator-5554 shell pidof -s com.programajster.modernformsnext.webview.sample
+    adb -s emulator-5554 logcat -d --pid=$samplePid -s MFNWebView:I
     ./scripts/test-source-consumer.ps1 -Snapshot CurrentMaster -Platform Windows -FrameworkRoot $framework
     ./scripts/test-source-consumer.ps1 -Snapshot CurrentMaster -Platform Android -FrameworkRoot $framework -JavaSdkDirectory $env:JAVA_HOME
 
@@ -163,10 +274,23 @@ with the same source properties, then each Validate.ps1 -Configuration Debug/Rel
 Blazor also runs --validate-contracts. Research is outside the product solution and adds
 no product ASP.NET/AndroidX dependency.
 
+Research command details (repeat with Release):
+
+    dotnet build ./research/BlazorFeasibility.Windows -c Debug -m:1 -p:UseSharedCompilation=false -p:GeneratePackageOnBuild=false -p:ModernFormsNextSourceRoot=$framework
+    dotnet run --project ./research/BlazorFeasibility.Windows -c Debug --no-build -- --validate-contracts
+    ./research/BlazorFeasibility.Windows/Validate.ps1 -Configuration Debug
+    ./research/BlazorFeasibility.Windows/Validate.ps1 -Configuration Debug -ApplicationPolicy
+    dotnet build ./research/WindowsWorldProbe -c Debug -m:1 -p:UseSharedCompilation=false -p:GeneratePackageOnBuild=false -p:ModernFormsNextSourceRoot=$framework
+    ./research/WindowsWorldProbe/Validate.ps1 -Configuration Debug
+
+Native wrappers wait for their owned process trees and verify test-profile cleanup.
+The final PR description records the delivered docs-only HEAD/CI separately from the
+compiled implementation SHA. No template was changed; template verification was not needed.
+
 ## Next actions, in dependency order
 
-1. Review the development snapshot/consumer PR and its exact-head CI; then qualify the
-   single #46 navigation increment in its own dependent PR without automatic merge.
+1. Review #51, then dependent #52 (the single #46 feature) and their exact-head CI/native
+   evidence. Both stay OPEN for the owner's decision; requalify after any later edits.
 2. Complete missing baseline API23/physical/provider and Windows foreground/manual,
    IME/DPI/accessibility/Designer/heap/release-mode qualification before claiming support.
 3. After actual official1.12.0 publication, verify and align package-only/API-ABI/native

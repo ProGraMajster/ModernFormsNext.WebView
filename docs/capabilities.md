@@ -1,5 +1,10 @@
 # Baseline capability matrix
 
+NavigationSchemeFiltering is an additive optional capability: initialized Windows Core
+hooks or an active Android API24+ main-frame-aware client. API23/older adapters preserve
+Default and explicitly reject nondefault loads. This is not a POST/subresource/frame
+firewall or caller authentication. See [detection and effects](navigation-scheme-filter.md).
+
 Implemented means the API/code path exists. Runtime qualification is separate: see
 [testing](testing.md) and the [final review](final-review.md). BrowserCapabilities describes
 the ready baseline operation surface; it does not claim a sandbox, identical engine behavior,

@@ -45,13 +45,15 @@ internal sealed class LoopbackContentServer : IAsyncDisposable
                 if (length == 0) return;
                 string requestLine = Encoding.ASCII.GetString(buffer, 0, length).Split('\n')[0];
                 string path = requestLine.Split(' ').ElementAtOrDefault(1) ?? "/";
-                bool redirect = path == "/security/redirect";
+                bool schemeRedirect = path == "/scheme/redirect";
+                bool redirect = schemeRedirect || path == "/security/redirect";
                 string html = path.StartsWith("/security/frame?", StringComparison.Ordinal)
                     ? "<script>const id=Number(new URL(location.href).searchParams.get('id'));chrome.webview.postMessage(JSON.stringify([id,'security-foreign']));parent.postMessage('security-frame-done','*');</script>"
                     : TestContent.Html;
                 byte[] body = redirect ? [] : Encoding.UTF8.GetBytes(html);
                 string status = redirect ? "302 Found" : "200 OK";
-                string location = redirect ? "Location: " + Address("security/top").AbsoluteUri.Replace("127.0.0.1", "localhost", StringComparison.Ordinal) + "\r\n" : "";
+                string location = schemeRedirect ? "Location: https://navigation-denied.invalid/\r\n"
+                    : redirect ? "Location: " + Address("security/top").AbsoluteUri.Replace("127.0.0.1", "localhost", StringComparison.Ordinal) + "\r\n" : "";
                 byte[] header = Encoding.ASCII.GetBytes($"HTTP/1.1 {status}\r\n{location}Content-Type: text/html; charset=utf-8\r\nContent-Length: {body.Length}\r\nConnection: close\r\n\r\n");
                 await stream.WriteAsync(header, requestLifetime.Token); await stream.WriteAsync(body, requestLifetime.Token);
             }

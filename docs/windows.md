@@ -1,5 +1,11 @@
 # Windows adapter
 
+The optional [per-view scheme filter](navigation-scheme-filter.md) is available after
+Core NavigationStarting hooks initialize. It filters commands/reported top-level targets,
+including reported redirects, without changing TLS or frame/subresource interception.
+Actual native qualification includes POST/owned HTTP302 and policy retention across
+cross-window recreation; platform/manual release gates remain separate.
+
 The official `Microsoft.Web.WebView2` SDK is pinned centrally to **1.0.4258.31**, the stable
 release available during this audit. The selected Core APIs are stable. The extension targets
 Windows 10 1809 (10.0.17763) or later; the main Windows backend itself is plain net10.0 while

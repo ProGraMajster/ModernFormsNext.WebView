@@ -30,7 +30,10 @@ public enum WebViewCapabilities
     AuthenticatedMessaging = 256,
     /// <summary>Typed nondefault local-content CSP headers through available native interception; no native privileges.</summary>
     /// <remarks>Provider/runtime CSP effects require separate qualification. Unsupported policies fail explicitly.</remarks>
-    ConfigurableLocalContent = 512
+    ConfigurableLocalContent = 512,
+    /// <summary>Per-view URI-scheme checks and cancellation of reported main-frame callbacks.</summary>
+    /// <remarks>Not a network/frame firewall. Android requires API24+; POST fallback is after network start.</remarks>
+    NavigationSchemeFiltering = 1024
 }
 
 /// <summary>Describes browser initialization independently of native hosting availability.</summary>
@@ -63,7 +66,7 @@ public enum WebViewErrorCategory
     Connection,
     /// <summary>The navigation was canceled.</summary>
     Canceled,
-    /// <summary>The address is invalid or disallowed by baseline policy.</summary>
+    /// <summary>The address is invalid or disallowed by baseline/per-view navigation policy.</summary>
     InvalidAddress,
     /// <summary>The browser engine could not perform the operation.</summary>
     Engine
@@ -117,6 +120,23 @@ public interface IWebViewPeerFactoryProvider
     /// <summary>Creates a fresh, uninitialized lease against the current native site.</summary>
     /// <remarks>Ownership transfers to NativeViewHost; initialization is started after creation.</remarks>
     IWebViewPeer CreatePeer(INativeViewSite site, IWebViewPeerClient client);
+}
+
+/// <summary>Optional detection of installed native main-frame navigation filtering hooks.</summary>
+/// <remarks>
+/// Does not change IWebViewPeer or its settings/request constructors. Older adapters remain
+/// compatible with Default navigation schemes; nondefault policies require this capability.
+/// The shared control validates app URI commands and reported callbacks. Implementations must
+/// report true only for an active initialized peer with installed, main-frame-aware hooks.
+/// Windows uses Core NavigationStarting; Android requires API24+ request metadata and retains
+/// the later OnPageStarted fallback for POST. This does not promise complete redirects, frames,
+/// subresource interception, pre-network cancellation or authenticated message origin.
+/// </remarks>
+public interface IWebViewNavigationFilterPeer
+{
+    /// <summary>Gets whether current native hooks support the documented reported-main-frame filter.</summary>
+    /// <remarks>UI thread only. False after retirement or on unsupported platform/API; never inferred from configuration intent.</remarks>
+    bool SupportsNavigationSchemeFiltering { get; }
 }
 
 /// <summary>Feature operations added to the framework's owned native peer lease.</summary>

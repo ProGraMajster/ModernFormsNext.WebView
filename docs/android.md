@@ -1,5 +1,11 @@
 # Android adapter
 
+The baseline still targets API23. The optional [navigation scheme filter](navigation-scheme-filter.md)
+requires API24+ main-frame request metadata; API23 explicitly rejects nondefault settings/
+loads. POST fallback runs after network start and cannot guarantee no server effects.
+The API34/provider113 evidence does not qualify API23/physical devices, and no scheme
+selection changes cleartext/mixed-content policy or authenticates AddJavascriptInterface.
+
 The native target is net10.0-android, minSdk **23**, matching the main backend. The adapter
 uses platform Android.Webkit.WebView; it adds no AndroidX WebKit, MAUI, Essentials or wrapper
 package. Java.Interop.Export/JavascriptInterface come from the .NET Android platform SDK.

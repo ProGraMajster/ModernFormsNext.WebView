@@ -75,6 +75,12 @@ emulator/device path. No Android behavior is inferred from the host-runnable net
 
 ## Windows native path
 
+Ordinary --validate also runs NavigationSchemeRuntimeValidation on Windows/API24+ Android:
+real main/same/opaque actors, pre-public-event scheme denial, Stop/raw reload, None/raw
+separation, HTTPS catalogs and actual POST. Windows adds owned HTTP302 and cross-window
+policy/capability retention. API23 has an explicit unsupported-control path, not a claim
+of feature support. See navigation-scheme-filter.md for boundaries and NOT RUN lanes.
+
 Both native validators now also load local HTML/CSS/JS/PNG and verify fixed-CSP inline,
 frame and fetch denial, collection replacement/reload and inactive namespace denial.
 The Windows cross-window replay fixture also replays local resources. Deterministic

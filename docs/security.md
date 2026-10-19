@@ -91,6 +91,12 @@ download listener/service, so the adapter performs no automatic saving or extern
 DevTools and native host-object exposure are disabled on Windows; Android remote debugging is
 not enabled by this adapter. Browser debugging tools remain outside the baseline API.
 
+The opt-in [navigation scheme filter](navigation-scheme-filter.md) narrows app URI
+commands and reported main-frame targets per instance. Default is unchanged. It cannot
+prevent all Android POST/subresource traffic, isolate a trusted realm or authorize C#
+operations. Capability detection and explicit unsupported results are separate from
+provider qualification; API23 does not support this new opt-in.
+
 Windows production profiles live under a per-application LocalAppData directory or an explicit
 WindowsWebViewOptions.UserDataFolder. Profiles can retain cookies/cache even though no cookie API
 exists. Android WebView data can be shared within the application process. Dispose releases the
