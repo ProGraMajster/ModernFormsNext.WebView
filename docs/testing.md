@@ -5,14 +5,19 @@ the adapter references Microsoft.Web.WebView2 1.0.4258.31. Android uses the .NET
 and SDK platform/build tools 36 with JDK 21. The sample minimum is API 23; no AndroidX WebKit is required.
 
 ```powershell
-$framework = & ./scripts/bootstrap-framework.ps1
+$framework = & ./scripts/bootstrap-framework.ps1 -Snapshot CurrentMaster
 dotnet restore ./ModernFormsNext.WebView.slnx -p:ModernFormsNextSourceRoot=$framework -p:EnableWindowsTargeting=true
 dotnet build ./ModernFormsNext.WebView.slnx -c Debug --no-restore -p:ModernFormsNextSourceRoot=$framework -p:EnableWindowsTargeting=true -p:GeneratePackageOnBuild=false -m:1 -p:UseSharedCompilation=false
 dotnet test ./ModernFormsNext.WebView.slnx -c Debug --no-restore -p:ModernFormsNextSourceRoot=$framework -p:EnableWindowsTargeting=true -p:GeneratePackageOnBuild=false -m:1 -p:UseSharedCompilation=false
 # Repeat build/test with -c Release. Build sequentially: the dependency has shared generators.
 ```
 
-The bootstrap checks out exactly 69c5ea2b20b07d9df801340c8ae9e3e1ca5dfbc3 (#60 merged).
+The manifest eng/framework-snapshots.json records two immutable revisions. CurrentMaster
+selects 7cfa44e9a992c30d5b1cf5fa76a147eeb2539f56, captured from master at
+2026-10-18T16:17:09Z, in sibling framework-master-7cfa44e. Updating this entry requires
+contract-diff review and full qualification, never a floating branch in a build.
+HistoricalBaseline retains 69c5ea2b20b07d9df801340c8ae9e3e1ca5dfbc3.
+For compatibility the no-argument bootstrap still selects HistoricalBaseline.
 Its default destination is a sibling `.modernformsnext-webview/framework-69c5ea2` directory,
 outside this repository. Do not put a source checkout under this repository: NuGet would
 inherit its Directory.Packages.props and reject the framework's explicit package versions.
@@ -21,6 +26,32 @@ An explicit source root is required: an older published framework package cannot
 contract. A missing root/NativeViewHost fails with a useful build error. The project files contain
 no machine-specific ProjectReference. Keep dependency clones and build artifacts ignored.
 No library is packable in this baseline, and no publication credentials are used.
+
+## Isolated source consumers, separate from official packages
+
+    ./scripts/test-source-consumer.ps1 -Snapshot CurrentMaster -Platform Windows -FrameworkRoot $framework
+    ./scripts/test-source-consumer.ps1 -Snapshot CurrentMaster -Platform Android -FrameworkRoot $framework -JavaSdkDirectory $env:JAVA_HOME
+
+Each command restores and sequentially builds Debug/Release in a new ignored GUID directory.
+Independent props/targets/central-version boundaries expose actual external integration errors.
+They reference public WebView, NativeViewHost, factory, typed native-site, transport/RPC
+and local-policy types. Windows also executes headless contracts without engine/platform
+initialization. Android compiles the real Android TFM/backend; it does not run an Activity.
+Windows also requires Core and x86/x64/arm64 loaders in the consumer output and rejects
+unused WPF/WinForms wrappers. The Windows adapter keeps the SDK's build/buildTransitive
+targets private: its resolved Core assembly/loader content still flow through project
+references. This fixes the external MSB3277 WindowsBase conflict without suppressing
+warnings or injecting repository targets into the consumer. Consumer builds use -warnaserror.
+Code directly using Microsoft.Web.WebView2.Core types must declare its own SDK reference;
+the Windows error-mapping tests and isolated world research do so explicitly. Ordinary
+WebView's public platform-neutral API does not require those native SDK types.
+These checks prove neither official NuGet/API-ABI compatibility nor native behavior.
+Use HistoricalBaseline with its matching root for comparison. Wrong SHA/dirty dependencies
+fail before building. Logs/result.json retain both repository identities, SDK and evidence mode.
+
+Official alignment waits for actual ModernFormsNext1.12.0 publication. The unchanged
+probe-official-framework.ps1 is an explicit-version diagnostic; the expected1.11.1 negative
+control does not block source development. See baseline-preview-readiness.md for gates.
 
 ## Deterministic suites
 
@@ -125,8 +156,11 @@ the same canonical WebView/dispatcher and waits for its owned process tree befor
 the artifact profile. Terminal execution PASS records **interactive NO-GO**, with positive
 connect-src/base-uri denial and rejected untrusted IPC; it is not an interactive Blazor PASS.
 
-The workflow has separate shared, Windows and Android jobs. Each checks out the framework at
-the exact pinned commit and passes ModernFormsNextSourceRoot. Shared runs the deterministic
+The workflow has shared, Windows and Android jobs for both frozen manifest entries.
+CurrentMaster keeps existing shared/windows/android check names; historical-baseline
+jobs are separate comparisons with fail-fast disabled. Each resolves a validated full SHA
+from the checked-out manifest and checks out exactly that dependency. No job follows master.
+Windows/Android also compile the isolated source consumers. Shared runs the deterministic
 suite on Ubuntu; Windows builds the sample and tests its adapter queue; Android installs its
 workload/SDK and explicitly selects JDK 21, runs the pure policy tests and signs a local Release APK. All builds are sequential,
 use no publishing secrets and perform no package deployment. Hosted CI execution requires an

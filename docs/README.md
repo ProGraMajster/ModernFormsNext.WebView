@@ -1,5 +1,7 @@
 # Experimental WebView baseline
 
+- [Next-phase delivery, merge audit and recorded development snapshots](next-phase-delivery-report.md)
+
 - [Security-policy/Blazor/world delivery history and subsequent audit](security-policy-development-report.md)
 - [Independent baseline preview/stable readiness and official package probe](baseline-preview-readiness.md)
 

@@ -6,6 +6,8 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
+    <!-- The research peer directly consumes Core APIs; do not rely on SDK build-target leakage. -->
+    <PackageReference Include="Microsoft.Web.WebView2" />
     <ProjectReference Include="../../src/ModernFormsNext.WebView.Windows/ModernFormsNext.WebView.Windows.csproj" />
     <!-- Reuse the product's acknowledgement queue; never invent request identities. -->
     <Compile Include="../../src/ModernFormsNext.WebView.Windows/NavigationCommandQueue.cs" Link="NavigationCommandQueue.cs" />

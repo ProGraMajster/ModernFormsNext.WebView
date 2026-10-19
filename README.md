@@ -35,8 +35,9 @@ The historical source bootstrap baseline is pinned to framework commit
 `69c5ea2b20b07d9df801340c8ae9e3e1ca5dfbc3`. No published package is selected as the
 NativeViewHost dependency. See [testing](docs/testing.md) for reproducible build commands.
 
-Current development is validated using the recorded master snapshot
-1fc6d8a9d2f9dd31f1279830cdbe60e9eec557b1 in a separate source checkout. NativeViewHost
+New development selects the frozen CurrentMaster entry in eng/framework-snapshots.json
+(7cfa44e9a992c30d5b1cf5fa76a147eeb2539f56) in a separate source checkout. Earlier
+merge audits used 1fc6d8a9d2f9dd31f1279830cdbe60e9eec557b1 and retain that identity. NativeViewHost
 is planned for official ModernFormsNext 1.12.0; package alignment is deferred until its
 actual publication. Missing hosting API in 1.11.1 is an expected historical control.
 
@@ -45,6 +46,8 @@ official package compatibility and remaining native/manual/release gates. Option
 Hybrid and Blazor are separate from the ordinary WebView release path. The current
 [development report](docs/security-policy-development-report.md) links reviewed merges
 and the original implementation/research delivery snapshots.
+The [next-phase report](docs/next-phase-delivery-report.md) records accepted merges,
+exact source lanes and subsequent development qualification.
 The existing application-owned provider is registered explicitly:
 
 ```csharp

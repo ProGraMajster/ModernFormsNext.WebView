@@ -9,7 +9,7 @@
   <!-- Source dependencies are explicit and never fall back to a floating framework version. -->
   <Target Name="ValidateFrameworkSource" BeforeTargets="CollectPackageReferences;PrepareForBuild">
     <Error Condition="'$(ModernFormsNextSourceRoot)' == ''"
-           Text="Set ModernFormsNextSourceRoot to a checkout of 69c5ea2b20b07d9df801340c8ae9e3e1ca5dfbc3. See docs/testing.md. NuGet bootstrap is deferred until a package contains NativeViewHost." />
+           Text="Set ModernFormsNextSourceRoot to a frozen snapshot from eng/framework-snapshots.json; see docs/testing.md. Official package alignment is deferred until actual ModernFormsNext 1.12.0 publication." />
     <Error Condition="'$(ModernFormsNextSourceRoot)' != '' And !Exists('$(ModernFormsNextSourceRoot)/ModernFormsNext/NativeViewHost.cs')"
            Text="ModernFormsNextSourceRoot must contain the public NativeViewHost implementation." />
   </Target>

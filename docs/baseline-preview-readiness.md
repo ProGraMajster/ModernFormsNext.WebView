@@ -9,23 +9,44 @@ There is no request to retrofit or republish 1.11.1.
 The original independent contribution started at main b9a5c5e; its final audit integrates
 accepted #47/#48/#49 without losing their code or documentation. Ordinary WebView #7/#8
 still has independent gates: optional Hybrid #21/#15 and Blazor #22 are not prerequisites.
-No package/version/metadata, main-framework source or historical baseline pin is changed.
+No release/package-version metadata, main-framework source or historical baseline pin is changed.
 
 ## Current source development and future package alignment
 
-Current-master snapshot: 1fc6d8a9d2f9dd31f1279830cdbe60e9eec557b1, fetched into a
-separate detached checkout. Historical baseline: 69c5ea2b20b07d9df801340c8ae9e3e1ca5dfbc3.
+The #47–#50 merge audits used master snapshot
+1fc6d8a9d2f9dd31f1279830cdbe60e9eec557b1 in a separate detached checkout.
+Master advanced during audit: next development uses
+7cfa44e9a992c30d5b1cf5fa76a147eeb2539f56, captured2026-10-18T16:17:09Z and frozen in
+eng/framework-snapshots.json. Historical baseline remains69c5ea2b20b07d9df801340c8ae9e3e1ca5dfbc3.
 NativeViewHost, NativeViewHosting and the typed Windows/Android native-site source files
-are identical between those revisions. Fresh full Debug/Release WebView tests/native
+are identical across all three revisions. The upstream increment adds SearchBar/TimePicker
+and related Designer/control work, without changing those hosting seams.
+Fresh full Debug/Release WebView tests/native
 qualification on the recorded current snapshot support **GO for source development**;
 they are not qualification of an official NuGet package or a stable ABI promise.
 Each report identifies its framework SHA; no build/CI follows a floating master.
+The [delivery report](next-phase-delivery-report.md) distinguishes executed lanes;
+[isolated consumers](testing.md) make external source integration repeatable.
 
 After actual 1.12.0 publication, verify real NuGet availability, package identities,
 compatible versions, TFMs and both backends including Android. Download official artifacts,
 inspect public API/ABI and native assets/metadata, build isolated Windows/Android consumers,
 run full and native qualification, then prepare a separate package-alignment PR.
 A project version or tag alone does not satisfy this gate. No release is forced here.
+
+The alignment PR must inventory official ModernFormsNext, WindowKit, Backend.Windows and
+Backend.Android identities/compatible versions and actual TFMs (shared net10.0, Windows
+net10.0-windows10.0.17763.0, Android net10.0-android/API23 floor). Do not infer Android
+availability from Windows. Verify NativeViewHost, INativeViewFactory, INativeViewSite,
+typed sites/dispatcher contracts, assembly identities and transitive version closure.
+Compare source API against official ref/runtime assemblies, compile isolated consumers
+and exercise real hosts/native loader/ABI, Android manifest/JNI assets and architectures.
+
+Keep source CI while adding a separate package-only lane without source fallback.
+Review WebView package IDs, experimental API policy, native/transitive assets,
+README/license/SourceLink/symbols and versioning in that future PR. This task chooses
+no version or metadata change. Re-run full Debug/Release/native and release qualification
+against the final candidate before requesting publication approval.
 
 ## Historical expected negative package control — 1.11.1
 
