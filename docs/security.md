@@ -1,5 +1,9 @@
 # Content and bridge security
 
+The separate [closed-program counter experiment](closed-program-counter-experiment.md)
+tests a finite native diagnostic intent, exact SDK context and one-use permit. Its
+narrow result never authenticates arbitrary page callers or enables product handlers.
+
 Treat every remote page, HTML fragment, frame and incoming message as untrusted. JavaScript
 defaults to disabled. Applications explicitly enable it before loading their controlled page;
 ExecuteScriptAsync is an explicit capability with normal browser side effects. The sample

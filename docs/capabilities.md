@@ -1,5 +1,9 @@
 # Baseline capability matrix
 
+The separate [closed-program research counter](closed-program-counter-experiment.md)
+adds no product capability. Its narrow native diagnostic GO cannot enable
+AuthenticatedMessaging or authenticate page/original callers.
+
 See [native qualification](native-platform-qualification.md) for actual API23/34/physical
 provider, Activity, default security, input/DPI and Designer results. API23 OS availability
 does not imply that its stock Chromium44 passes the modern endpoint or Floor/history lane.

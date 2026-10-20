@@ -1,5 +1,11 @@
 # Build and qualification
 
+`research/ClosedProgramProbe.Windows/Validate.ps1` executes the isolated native
+[closed-program counter matrix](closed-program-counter-experiment.md), including parsed
+actors, live SDK callbacks versus recorded inspection, actual lifecycle and fresh
+authorized controls. Build Debug/Release separately for each frozen snapshot; CI
+compilation is not native PASS. Keep the previous WindowsWorldProbe deputy regression.
+
 For #46 popup configuration, run `scripts/test-security-consumer.ps1` for both frozen
 snapshots (four external compiler cases in Debug/Release). Run Windows sample
 `scripts/test-windows-runtime.ps1 -Arguments @('--validate-popup')` and Android

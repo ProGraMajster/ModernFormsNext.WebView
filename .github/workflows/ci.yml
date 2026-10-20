@@ -96,6 +96,13 @@ jobs:
         run: dotnet run --project research/BlazorFeasibility.Windows -c Release --no-build -- --validate-contracts
       - name: Build isolated execution-world research fixture
         run: dotnet build research/WindowsWorldProbe -c Release -m:1 -p:UseSharedCompilation=false -p:GeneratePackageOnBuild=false -p:ModernFormsNextSourceRoot=${{ github.workspace }}/framework
+      - name: Build closed-program counter research (native execution is a separate local lane)
+        shell: pwsh
+        run: |
+          foreach ($configuration in @('Debug','Release')) {
+            dotnet build research/ClosedProgramProbe.Windows -c $configuration -m:1 -p:UseSharedCompilation=false -p:GeneratePackageOnBuild=false -warnaserror -p:ModernFormsNextSourceRoot=${{ github.workspace }}/framework
+            if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          }
       - name: Isolated public source consumer (compile and headless contracts)
         shell: pwsh
         run: ./scripts/test-source-consumer.ps1 -Platform Windows -Snapshot '${{ matrix.snapshot }}' -FrameworkRoot '${{ github.workspace }}/framework'
