@@ -1,5 +1,9 @@
 # Windows adapter
 
+The isolated [closed-program counter research](closed-program-counter-experiment.md)
+uses the existing research NativeViewHost peer and SDK native context metadata,
+without changing this product adapter or exposing its Core. General Hybrid stays NO-GO.
+
 Experimental [new-window handoff](new-window-policy.md) uses a fresh same-environment
 controller. Deny remains default; the target keeps its own policies, not the source
 catalog. WindowCloseRequested is informational. Script-popup opt-in warns MFNWVSEC001.

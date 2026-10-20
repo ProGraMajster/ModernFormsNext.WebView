@@ -1,5 +1,9 @@
 # Roadmap
 
+The isolated [closed-program counter experiment](docs/closed-program-counter-experiment.md)
+measures a native-only one-use diagnostic permit. No product handlers/authentication
+are enabled; general Hybrid/Blazor AttachPage remain NO-GO.
+
 The [native qualification continuation](docs/native-platform-qualification.md) records
 API23 Floor versus modern RPC, actual Activity/device testing, default security, real
 100%/225% monitors and remaining Windows input/restore/Designer failures. These do not

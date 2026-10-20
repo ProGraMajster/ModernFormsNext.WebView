@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.17763.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" />
+    <ProjectReference Include="../../src/ModernFormsNext.WebView.Windows/ModernFormsNext.WebView.Windows.csproj" />
+    <!-- Exact existing native host and canonical acknowledgement queue; no second host/lifecycle. -->
+    <Compile Include="../WindowsWorldProbe/ResearchPeer.cs" Link="ResearchPeer.cs" />
+    <Compile Include="../../src/ModernFormsNext.WebView.Windows/NavigationCommandQueue.cs" Link="NavigationCommandQueue.cs" />
+    <Compile Include="../../samples/ModernFormsNext.WebView.Sample.Windows/LoopbackContentServer.cs" Link="LoopbackContentServer.cs" />
+  </ItemGroup>
+</Project>
