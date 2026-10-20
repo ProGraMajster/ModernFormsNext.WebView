@@ -32,11 +32,11 @@ network policy parity or physical-device qualification.
 | Back/forward | Availability, false while loading | Native history | Native history; reset on overlapping programmatic navigation |
 | Reload/Stop | Reload false while loading; Stop revokes pending work | Implemented | Implemented |
 | JavaScript | Explicit opt-in; native JSON; cyclic/non-JSON projections differ | Official CoreWebView2 API | EvaluateJavascript |
-| Page to app | Untrusted string; document lifetime guard | Official transport, informational Source | Minimal annotated bridge; no reliable origin/Source |
+| Page to app | Untrusted string; document lifetime guard | Official transport, informational Source | Annotated Java bridge; initial blank popup SDK string port; no reliable origin/Source |
 | App to page | Untrusted string; submission completion | PostWebMessageAsString | JSON-escaped MessageEvent script |
 | JavaScript setting/UserAgent | Safe primitives; null agent restores default | Implemented | Implemented |
 | Permissions | No request/approval API | Default deny | Default deny, geolocation/file chooser denied |
-| New windows | No public API | Suppressed | Suppressed |
+| New windows | Deny default; gesture/explicit script opt-in + fresh owned target; MFNWVSEC001 | Same environment/profile; native handoff | API23 SDK handoff, same Activity; no destination/origin metadata |
 | Downloads | No public API | Canceled | No automatic download handler |
 | Cookies/custom headers | Deferred | No shared API | No shared API |
 | Native hosting | Framework #60 owns placement/lifetime | HWND site; controller content size | Android site + AndroidViewPeer attachment |
@@ -53,7 +53,7 @@ Native browser surfaces keep the host's documented airspace restrictions. A Skia
 does not capture native browser pixels. Nonrectangular/transformed clipping is not promised.
 
 Future work requires separate design: origin-restricted Android messaging, complete request
-interception, cookies/headers, permission UX, download/new-window policy, richer settings,
+interception, cookies/headers, permission UX, download policy, richer settings,
 profile isolation and wider device/engine qualification. These are not silently enabled.
 
 [#16 research](issue16-android-origin-research.md) adds a separate AndroidX SDK APK. It

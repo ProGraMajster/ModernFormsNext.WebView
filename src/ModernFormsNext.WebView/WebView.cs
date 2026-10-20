@@ -88,7 +88,8 @@ public partial class WebView : NativeViewHost
         (lease?.Peer is IWebViewLocalContentPeer { SupportsLocalContent: true } ? WebViewCapabilities.LocalContent : WebViewCapabilities.None) |
         (lease?.Peer is IWebViewLocalContentPolicyPeer { SupportsLocalContent: true, SupportsLocalContentPolicy: true }
             ? WebViewCapabilities.ConfigurableLocalContent : WebViewCapabilities.None) |
-        (HasNavigationSchemeFiltering ? WebViewCapabilities.NavigationSchemeFiltering : WebViewCapabilities.None) : WebViewCapabilities.None;
+        (HasNavigationSchemeFiltering ? WebViewCapabilities.NavigationSchemeFiltering : WebViewCapabilities.None) |
+        (HasNewWindows ? WebViewCapabilities.NewWindows : WebViewCapabilities.None) : WebViewCapabilities.None;
 
     /// <summary>Gets or enables JavaScript and the minimal string bridge; defaults to false.</summary>
     /// <remarks>UI thread only. Disabling cancels outstanding scripts/messages. Page code is untrusted.</remarks>
@@ -136,7 +137,7 @@ public partial class WebView : NativeViewHost
     /// <summary>Occurs for untrusted string data from the active document; Source is informational.</summary>
     public event EventHandler<WebViewMessageReceivedEventArgs>? WebMessageReceived;
 
-    private WebViewSettings Settings => new(javaScriptEnabled, userAgent);
+    private WebViewSettings Settings => new(javaScriptEnabled, userAgent) { NewWindowPolicy = newWindowPolicy };
     private void VerifyAccess()
     {
         Dispatcher.UIThread.VerifyAccess();
@@ -359,6 +360,7 @@ public partial class WebView : NativeViewHost
         public void Resize(WindowKit.PixelSize size) { if (!disposed) Peer.Resize(size); }
         public void RequestFocus() { if (!disposed) Peer.RequestFocus(); }
         public bool TryMoveFocus(bool forward) => !disposed && Peer.TryMoveFocus(forward);
+        internal void FailNewWindow(long id, Uri? address) => client.NavigationFailed(id, address, WebViewErrorCategory.Engine);
         public void Dispose()
         {
             if (disposed) return; disposed = true; client.Retired = true;
@@ -385,7 +387,7 @@ public partial class WebView : NativeViewHost
         }
     }
 
-    private sealed class Client(WebView owner, INativeViewSite site, long identity) : IWebViewPeerClient
+    private sealed class Client(WebView owner, INativeViewSite site, long identity) : IWebViewPeerClient, IWebViewNewWindowPeerClient
     {
         internal bool Retired;
         public bool IsCurrent => !Retired && site.IsCurrent && identity == owner.generation &&
@@ -395,6 +397,7 @@ public partial class WebView : NativeViewHost
         {
             if (!IsCurrent) return;
             owner.platform = platform; owner.engine = engine; owner.engineVersion = version;
+            if (!owner.CanApplyNewWindowPolicy) { InitializationFailed(WebViewErrorCategory.Engine); return; }
             owner.initializationState = WebViewInitializationState.Ready;
             long beforeNotification = owner.requestId;
             owner.InitializationStateChanged?.Invoke(owner, EventArgs.Empty);
@@ -510,6 +513,13 @@ public partial class WebView : NativeViewHost
         {
             if (Current(id) && owner.javaScriptEnabled) owner.WebMessageReceived?.Invoke(owner,
                 new(message, source) { RequestId = id, PeerGeneration = identity });
+        }
+        public WebViewNewWindowTarget? NewWindowRequested(long id, Uri? destination, bool userInitiated)
+            => Current(id) ? owner.RequestNewWindow(id, destination, userInitiated) : null;
+        public void CloseRequested(long id)
+        {
+            if (Current(id) && owner.openedAsNewWindow)
+                owner.CloseRequested?.Invoke(owner, EventArgs.Empty);
         }
     }
 }

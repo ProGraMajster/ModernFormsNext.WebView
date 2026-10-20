@@ -1,5 +1,14 @@
 # Android adapter
 
+Experimental [new-window handoff](new-window-policy.md) uses the API23 platform
+WebViewTransport and a fresh target in the same Activity. Android supplies no URI or
+frame/origin authentication. Initial blank-popup readiness uses a guarded native
+visual-state callback plus an SDK API23 string port for the already-created blank
+document (the Java interface appears only on a subsequent load). It reuses the
+original envelope/client guards and grants no sender authority. Ordinary URL callbacks
+stay canonical. No AndroidX/minSdk
+change or new manifest permission is introduced. Deny remains default.
+
 The baseline still targets API23. The optional [navigation scheme filter](navigation-scheme-filter.md)
 requires API24+ main-frame request metadata; API23 explicitly rejects nondefault settings/
 loads. POST fallback runs after network start and cannot guarantee no server effects.

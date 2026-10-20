@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory)][string]$Serial,
     [Parameter(Mandatory)][string]$FrameworkRoot,
     [ValidateSet('Debug','Release')][string]$Configuration='Debug',
-    [ValidateSet('Full','Floor')][string]$Mode='Full',
+    [ValidateSet('Full','Floor','Popup')][string]$Mode='Full',
     [switch]$Recreate,
     [switch]$NativeBack,
     # The human must explicitly designate the selected physical device for this test.
@@ -74,7 +74,8 @@ try {
     & $AdbPath -s $Serial install --no-incremental --no-streaming -r $apk *> (Join-Path $output 'install.log')
     if($LASTEXITCODE){throw 'Sample installation failed; no uninstall/downgrade fallback is attempted'}
     [void](DeviceText @('shell','am','force-stop','com.programajster.modernformsnext.webview.sample'))
-    $arguments=@('shell','am','start','-n','com.programajster.modernformsnext.webview.sample/.MainActivity','--es','validation-run-id',$runId,'--ez',$(if($Mode -eq 'Floor'){'validate-floor'}else{'validate'}),'true')
+    $intent=if($Mode -eq 'Floor'){'validate-floor'}elseif($Mode -eq 'Popup'){'validate-popup'}else{'validate'}
+    $arguments=@('shell','am','start','-n','com.programajster.modernformsnext.webview.sample/.MainActivity','--es','validation-run-id',$runId,'--ez',$intent,'true')
     if($Recreate){$arguments+=@('--ez','validate-lifecycle','true')}
     if($NativeBack){$arguments+=@('--ez','validate-back','true')}
     if($TlsProbeUri){
@@ -96,7 +97,7 @@ try {
     if(!$samplePid){throw 'Sample process did not start'}
     $identity.processId=$samplePid
     $pattern='^\d\d-\d\d\s+\d\d:\d\d:\d\d\.\d+\s+'+[regex]::Escape($samplePid)+'\s+'
-    $watch=[Diagnostics.Stopwatch]::StartNew();$backSent=$false;$passed=$false
+    $watch=[Diagnostics.Stopwatch]::StartNew();$backSent=$false;$popupEnterSent=$false;$passed=$false
     while($watch.Elapsed.TotalSeconds -lt $TimeoutSeconds){
         # Host filtering works on API23, whose logcat does not accept --pid. A fresh
         # run marker excludes old PID-reuse records without clearing anyone's logcat.
@@ -107,20 +108,29 @@ try {
             $current=@($lines | Select-Object -Skip $marker -Last 2000)
             $current | Set-Content (Join-Path $output 'native.log')
             if($current -match 'RUNTIME FAIL|FATAL EXCEPTION'){throw 'Native sample reported failure'}
-            if($NativeBack -and !$backSent -and $current -match 'FLOOR WAIT NATIVE BACK'){
-                $window=DeviceText @('shell','dumpsys','window','windows')
+            if($Mode -eq 'Popup' -and !$popupEnterSent -and $current -match 'POPUP GESTURE WAIT'){
+                $window=DeviceText @('shell','dumpsys','window')
                 $focused=@($window -split '[\r\n]+' | Where-Object {$_ -match 'mCurrentFocus='})
+                $focused | Set-Content (Join-Path $output 'foreground-Enter.log')
+                if(!($focused -match 'com\.programajster\.modernformsnext\.webview\.sample/')){throw 'Refusing Enter: foreground window is not the selected sample'}
+                [void](DeviceText @('shell','input','keyevent','66'));$popupEnterSent=$true
+            }
+            if($NativeBack -and !$backSent -and $current -match 'FLOOR WAIT NATIVE BACK'){
+                $window=DeviceText @('shell','dumpsys','window')
+                $focused=@($window -split '[\r\n]+' | Where-Object {$_ -match 'mCurrentFocus='})
+                $focused | Set-Content (Join-Path $output 'foreground-Back.log')
                 if(!($focused -match 'com\.programajster\.modernformsnext\.webview\.sample/')){throw 'Refusing Back: foreground window is not the selected sample'}
                 [void](DeviceText @('shell','input','keyevent','4'));$backSent=$true
             }
-            $terminal=if($Mode -eq 'Floor'){'FLOOR PASS'}else{'RUNTIME PASS'}
+            $terminal=if($Mode -eq 'Floor'){'FLOOR PASS'}elseif($Mode -eq 'Popup'){'POPUP PASS'}else{'RUNTIME PASS'}
             if($current -match $terminal){$passed=$true;break}
         }
         Start-Sleep -Milliseconds 500
     }
     if(!$passed){throw 'Native sample did not reach its terminal result before the bound'}
     if($NativeBack -and !$backSent){throw 'Native Back actor did not execute'}
-    $identity.status='PASS';$identity.nativeBackSent=$backSent
+    if($Mode -eq 'Popup' -and !$popupEnterSent){throw 'Native popup Enter actor did not execute'}
+    $identity.status='PASS';$identity.nativeBackSent=$backSent;$identity.popupEnterSent=$popupEnterSent
     Get-Content (Join-Path $output 'native.log') -Tail 16
 }
 catch {$identity.status='FAIL';$identity.failure=$_.Exception.Message;throw}

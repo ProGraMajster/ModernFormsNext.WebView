@@ -7,7 +7,7 @@ using Browser = global::Android.Webkit.WebView;
 
 namespace ModernFormsNext.WebView.Android;
 
-internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPeerClient client) : IWebViewPeer, IWebViewLocalContentPolicyPeer, IWebViewNavigationFilterPeer
+internal sealed partial class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPeerClient client) : IWebViewPeer, IWebViewLocalContentPolicyPeer, IWebViewNavigationFilterPeer, IWebViewNewWindowPeer
 {
     public bool SupportsLocalContent => Current && view is not null;
     public bool SupportsLocalContentPolicy => SupportsLocalContent;
@@ -54,7 +54,7 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
             view.Settings.SetSupportMultipleWindows(true);
             view.Settings.JavaScriptCanOpenWindowsAutomatically = false;
             view.Settings.MediaPlaybackRequiresUserGesture = true;
-            navigationClient = new NavigationClient(this, ++browserGeneration); chromeClient = new ChromeClient();
+            navigationClient = new NavigationClient(this, ++browserGeneration); chromeClient = new ChromeClient(this, browserGeneration);
             view.SetWebViewClient(navigationClient); view.SetWebChromeClient(chromeClient);
             attachment = new AndroidViewPeer(site, view, ownsView: false);
             ApplySettings(value);
@@ -81,6 +81,7 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
         if (view is null || !Current) return;
         view.Settings.JavaScriptEnabled = value.IsJavaScriptEnabled;
         view.Settings.UserAgentString = value.UserAgent ?? defaultUserAgent;
+        view.Settings.JavaScriptCanOpenWindowsAutomatically = (int)value.NewWindowPolicy == 2;
         if (value.IsJavaScriptEnabled && bridge is null)
         {
             bridge = new MessageBridge(this, browserGeneration);
@@ -114,6 +115,7 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
     public void Navigate(WebViewNavigationRequest request)
     {
         if (!Current || view is null) return;
+        popupTargetUsed = true;
         long previousId = id;
         id = request.Id;
         if (!callbacks.NavigationStarting(id, request.Uri, false) || !Current || id != request.Id) return;
@@ -151,7 +153,8 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
     {
         retireBeforeNextNavigation |= loading;
         stopped = true; loading = false;
-        if (Current) view?.StopLoading();
+        try { ClosePopupPort(); }
+        finally { if (Current) view?.StopLoading(); }
     }
     private void ReplaceInterruptedBrowser()
     {
@@ -165,7 +168,7 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
             view.Settings.SetSupportMultipleWindows(true);
             view.Settings.JavaScriptCanOpenWindowsAutomatically = false;
             view.Settings.MediaPlaybackRequiresUserGesture = true;
-            navigationClient = new NavigationClient(this, ++browserGeneration); chromeClient = new ChromeClient();
+            navigationClient = new NavigationClient(this, ++browserGeneration); chromeClient = new ChromeClient(this, browserGeneration);
             view.SetWebViewClient(navigationClient); view.SetWebChromeClient(chromeClient);
             attachment = new AndroidViewPeer(site, view, ownsView: false);
             attachment.Resize(contentSize); ApplySettings(settings);
@@ -182,6 +185,7 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
     {
         token.ThrowIfCancellationRequested();
         if (!Current || view is null) throw new WebViewOperationException(WebViewErrorCategory.Engine);
+        popupTargetUsed = true;
         var evaluation = new Evaluation(this, token); evaluations.Add(evaluation);
         try { view.EvaluateJavascript(script, evaluation); }
         catch { evaluation.Fail(); }
@@ -193,6 +197,8 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
     private bool Override(Uri? uri)
     {
         if (!Current) return true;
+        awaitingInitialPopup = false;
+        if (preparedPopupId != id || uri?.AbsoluteUri != "about:blank") { preparedPopupId = null; ClosePopupPort(); }
         // A URI leaving raw HTML is a new document, including a link/meta refresh
         // during its load. Do not normalize its destination as the raw HTML's private URL.
         bool redirect = !rawHtml && !stopped && loading && id != 0;
@@ -204,7 +210,9 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
     private void Started(string? url)
     {
         if (!Current || stopped) return;
+        awaitingInitialPopup = false;
         var uri = ParseUri(url);
+        if (preparedPopupId != id || uri?.AbsoluteUri is not (null or "about:blank")) { preparedPopupId = null; ClosePopupPort(); }
         if (!loading || id == 0)
         {
             // POST and some engine navigations skip ShouldOverrideUrlLoading. Once the
@@ -235,11 +243,22 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
     private void Finished(string? url)
     {
         if (!Current || stopped || view is null) return;
+        awaitingInitialPopup = false;
         Uri? uri = rawHtml ? null : ParseUri(url);
         if (!rawHtml && expectedUri is not null && uri != expectedUri) return;
         long originalId = id;
+        if (preparedPopupId == originalId && popupDocumentLifetime.IsCancellationRequested) { CancelInitialPopup(); return; }
+        if (preparedPopupId == originalId && uri?.AbsoluteUri is (null or "about:blank") && settings.IsJavaScriptEnabled)
+        {
+            // document.close can report PageFinished before/after the visual callback.
+            // Both paths must await the same SDK port bootstrap, never overwrite its
+            // helper with a Java interface absent from this initial blank document.
+            if (popupPortCallback is null) _ = InitializeBlankPopupMessagesAsync(view, browserGeneration, originalId);
+            if (popupPortCallback?.Ready.Task.IsCompletedSuccessfully != true) return;
+        }
+        preparedPopupId = null;
         loading = false; expectedUri = null; // Commit before observers may submit a new request.
-        if (settings.IsJavaScriptEnabled) view.EvaluateJavascript(CreateHelperScript(originalId), null);
+        if (settings.IsJavaScriptEnabled && popupPortCallback is null) view.EvaluateJavascript(CreateHelperScript(originalId), null);
         callbacks.HistoryChanged(originalId, view.CanGoBack(), view.CanGoForward());
         callbacks.NavigationCompleted(originalId, uri, null);
     }
@@ -257,10 +276,16 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
     private void Cleanup()
     {
         ++browserGeneration; // Revoke native callbacks before detaching/destroying the browser.
+        popupCancellation.Dispose(); popupCancellation = default; popupDocumentLifetime = default;
+        preparedPopupId = null; openedPopup = awaitingInitialPopup = false;
+        // Native owns outstanding JNI callback references until delivery; generation
+        // revocation above makes them inert. Do not dispose a callback still in flight.
+        popupVisualStates.Clear();
         navigationClient?.Retire();
         var previous = view; view = null;
         try
         {
+            ClosePopupPort(); // Remaining View/attachment teardown must still run if native close fails.
             foreach (var evaluation in evaluations.ToArray()) evaluation.Cancel();
             if (previous is not null)
             {
@@ -335,12 +360,18 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
             if (Current && !owner.rawHtml && ParseUri(error?.Url) == ParseUri(view?.Url)) owner.Failed(error?.Url, -11);
         }
     }
-    private sealed class ChromeClient : WebChromeClient
+    private sealed class ChromeClient(AndroidWebViewPeer owner, long generation) : WebChromeClient
     {
         public override void OnPermissionRequest(PermissionRequest? request) => request?.Deny();
         public override void OnGeolocationPermissionsShowPrompt(string? origin, GeolocationPermissions.ICallback? callback)
             => callback?.Invoke(origin, false, false);
-        public override bool OnCreateWindow(Browser? view, bool isDialog, bool isUserGesture, global::Android.OS.Message? resultMsg) => false;
+        public override bool OnCreateWindow(Browser? view, bool isDialog, bool isUserGesture, global::Android.OS.Message? resultMsg)
+            => owner.Current && generation == owner.browserGeneration && owner.CreateWindow(isUserGesture, resultMsg);
+        public override void OnCloseWindow(Browser? window)
+        {
+            if (owner.Current && generation == owner.browserGeneration && owner.openedPopup && owner.callbacks is IWebViewNewWindowPeerClient callback)
+                callback.CloseRequested(owner.id);
+        }
         public override bool OnShowFileChooser(Browser? webView, IValueCallback? filePathCallback, FileChooserParams? fileChooserParams)
         { filePathCallback?.OnReceiveValue(null); return true; }
     }
@@ -348,27 +379,29 @@ internal sealed class AndroidWebViewPeer(AndroidNativeViewSite site, IWebViewPee
     {
         [JavascriptInterface, Java.Interop.Export("postMessage")]
         public void PostMessage(string? message)
+            => owner.ReceiveBridgePacket(message, generation);
+    }
+    private void ReceiveBridgePacket(string? message, long generation, CancellationToken documentToken = default)
+    {
+        if (message is null) return;
+        long requestId;
+        string payload;
+        try
         {
-            if (message is null) return;
-            long requestId;
-            string payload;
-            try
-            {
-                using var packet = JsonDocument.Parse(message);
-                if (packet.RootElement.ValueKind != JsonValueKind.Array || packet.RootElement.GetArrayLength() != 2 ||
-                    packet.RootElement[0].ValueKind != JsonValueKind.Number ||
-                    !packet.RootElement[0].TryGetInt64(out requestId) || packet.RootElement[1].ValueKind != JsonValueKind.String) return;
-                payload = packet.RootElement[1].GetString()!;
-            }
-            catch (JsonException) { return; }
-            // JavascriptInterface runs on Chromium's bridge thread. Capture only the string;
-            // resolve current UI state after dispatch, and never claim sender origin on Android.
-            Dispatcher.UIThread.Post(() =>
-            {
-                if (owner.Current && generation == owner.browserGeneration && owner.settings.IsJavaScriptEnabled)
-                    owner.callbacks.WebMessageReceived(requestId, payload, null);
-            });
+            using var packet = JsonDocument.Parse(message);
+            if (packet.RootElement.ValueKind != JsonValueKind.Array || packet.RootElement.GetArrayLength() != 2 ||
+                packet.RootElement[0].ValueKind != JsonValueKind.Number ||
+                !packet.RootElement[0].TryGetInt64(out requestId) || packet.RootElement[1].ValueKind != JsonValueKind.String) return;
+            payload = packet.RootElement[1].GetString()!;
         }
+        catch (JsonException) { return; }
+        // Java interface callbacks arrive on Chromium's bridge thread; the initial
+        // popup port uses this same envelope path. Neither authenticates an origin.
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (Current && generation == browserGeneration && settings.IsJavaScriptEnabled && !documentToken.IsCancellationRequested)
+                callbacks.WebMessageReceived(requestId, payload, null);
+        });
     }
     private sealed class Evaluation : Java.Lang.Object, IValueCallback
     {

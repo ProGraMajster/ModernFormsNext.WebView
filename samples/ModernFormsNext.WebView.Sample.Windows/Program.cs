@@ -10,15 +10,33 @@ internal static class Program
         WindowsPlatformBootstrap.Initialize();
         bool keyboard = args.Contains("--validate-keyboard", StringComparer.Ordinal);
         bool desktop = args.Contains("--validate-desktop", StringComparer.Ordinal);
+        bool popup = args.Contains("--validate-popup", StringComparer.Ordinal);
         bool securityOnly = args.Contains("--validate-security", StringComparer.Ordinal);
-        bool validate = keyboard || desktop || securityOnly || args.Contains("--validate", StringComparer.Ordinal);
+        bool validate = popup || keyboard || desktop || securityOnly || args.Contains("--validate", StringComparer.Ordinal);
         string? profile = validate ? System.IO.Path.Combine(System.IO.Path.GetTempPath(), "mfn-webview-" + Guid.NewGuid().ToString("N")) : null;
+        int profileArgument = Array.IndexOf(args, "--profile");
+        bool externallyOwnedProfile = profileArgument >= 0;
+        if (externallyOwnedProfile)
+        {
+            if (!validate || profileArgument + 1 >= args.Length) throw new ArgumentException("An external profile is for the native validation driver only.");
+            profile = System.IO.Path.GetFullPath(args[profileArgument + 1]);
+            string temporaryRoot = System.IO.Path.GetFullPath(System.IO.Path.GetTempPath()).TrimEnd(System.IO.Path.DirectorySeparatorChar) + System.IO.Path.DirectorySeparatorChar;
+            if (!profile.StartsWith(temporaryRoot, StringComparison.OrdinalIgnoreCase) ||
+                !System.IO.Path.GetFileName(profile).StartsWith("mfn-webview-", StringComparison.Ordinal))
+                throw new ArgumentException("Validation profiles must use a unique mfn-webview- directory under the temporary root.");
+        }
         WindowsWebViewProvider.Register(new WindowsWebViewOptions { UserDataFolder = profile });
         using var form = new SampleForm();
         if (validate) form.Shown += async (_, _) =>
         {
             try
             {
+                if (popup)
+                {
+                    await NewWindowRuntimeValidation.RunAsync(form, Console.WriteLine,
+                        args.Contains("--popup-gesture", StringComparer.Ordinal) ? NativeKeyboardValidation.PopupEnterAsync : null);
+                    Console.WriteLine("POPUP PASS"); return;
+                }
                 if (securityOnly) await RuntimeValidation.ReadyAsync(form.Browser);
                 else await RuntimeValidation.RunAsync(form, Console.WriteLine);
                 await DefaultSecurityRuntimeValidation.RunAsync(form.Browser, Console.WriteLine);
@@ -98,7 +116,10 @@ internal static class Program
         // Close ends the window loop; dispose the owned control tree before attempting
         // profile removal. The using declaration otherwise runs only after cleanup.
         form.Dispose();
-        if (profile is not null)
+        // The external driver waits for this process AND its WebView2 descendants.
+        // Environment COM references intentionally live until application exit; an
+        // in-process deletion can race those descendants even after controller.Close.
+        if (profile is not null && !externallyOwnedProfile)
         {
             string resolvedProfile = System.IO.Path.GetFullPath(profile);
             string temporaryRoot = System.IO.Path.GetFullPath(System.IO.Path.GetTempPath()).TrimEnd(System.IO.Path.DirectorySeparatorChar)

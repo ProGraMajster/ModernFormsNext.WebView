@@ -33,7 +33,9 @@ public enum WebViewCapabilities
     ConfigurableLocalContent = 512,
     /// <summary>Per-view URI-scheme checks and cancellation of reported main-frame callbacks.</summary>
     /// <remarks>Not a network/frame firewall. Android requires API24+; POST fallback is after network start.</remarks>
-    NavigationSchemeFiltering = 1024
+    NavigationSchemeFiltering = 1024,
+    /// <summary>Native new-window intents and explicit fresh app-owned target handoff; no origin authentication.</summary>
+    NewWindows = 2048
 }
 
 /// <summary>Describes browser initialization independently of native hosting availability.</summary>
@@ -96,7 +98,12 @@ public sealed record WebViewNavigationRequest(long Id, Uri? Uri, string? Html)
 /// <summary>Immutable browser settings applied on the UI thread.</summary>
 /// <param name="IsJavaScriptEnabled">Whether explicit scripts and page messaging are allowed.</param>
 /// <param name="UserAgent">An override, or null for the engine default.</param>
-public sealed record WebViewSettings(bool IsJavaScriptEnabled, string? UserAgent);
+public sealed record WebViewSettings(bool IsJavaScriptEnabled, string? UserAgent)
+{
+    /// <summary>Gets the per-view new-window policy; Deny preserves older adapter behavior.</summary>
+    /// <remarks>Nondefault values require IWebViewNewWindowPeer. This additive property preserves the original two-argument constructor.</remarks>
+    public WebViewNewWindowPolicy NewWindowPolicy { get; init; }
+}
 
 /// <summary>Detached engine information without native handles, profiles, content or messages.</summary>
 /// <param name="Platform">Platform name.</param>

@@ -1,5 +1,9 @@
 # Windows adapter
 
+Experimental [new-window handoff](new-window-policy.md) uses a fresh same-environment
+controller. Deny remains default; the target keeps its own policies, not the source
+catalog. WindowCloseRequested is informational. Script-popup opt-in warns MFNWVSEC001.
+
 The optional [per-view scheme filter](navigation-scheme-filter.md) is available after
 Core NavigationStarting hooks initialize. It filters commands/reported top-level targets,
 including reported redirects, without changing TLS or frame/subresource interception.
