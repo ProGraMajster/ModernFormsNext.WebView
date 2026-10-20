@@ -91,6 +91,7 @@ internal static class NativeKeyboardValidation
     }
     internal static Task PopupEnterAsync()
     {
+        SetForegroundWindow(System.Diagnostics.Process.GetCurrentProcess().MainWindowHandle);
         Inject([Key(0x0D, false), Key(0x0D, true)]); // Existing foreground ownership guard applies.
         return Task.CompletedTask;
     }

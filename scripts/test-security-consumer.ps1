@@ -79,3 +79,6 @@ try {
  $result.status='PASS'
 }catch{$result.status='FAIL';$result.failure=$_.Exception.Message;throw}
 finally{$result | ConvertTo-Json -Depth 6 | Set-Content (Join-Path $output 'result.json');Write-Output "Evidence: $output"}
+# The last native compilation deliberately failed. All expectations above passed;
+# return success explicitly so CI does not inherit that expected compiler exit code.
+exit 0

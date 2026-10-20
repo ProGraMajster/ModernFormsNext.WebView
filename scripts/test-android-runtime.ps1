@@ -109,14 +109,16 @@ try {
             $current | Set-Content (Join-Path $output 'native.log')
             if($current -match 'RUNTIME FAIL|FATAL EXCEPTION'){throw 'Native sample reported failure'}
             if($Mode -eq 'Popup' -and !$popupEnterSent -and $current -match 'POPUP GESTURE WAIT'){
-                $window=DeviceText @('shell','dumpsys','window','windows')
+                $window=DeviceText @('shell','dumpsys','window')
                 $focused=@($window -split '[\r\n]+' | Where-Object {$_ -match 'mCurrentFocus='})
+                $focused | Set-Content (Join-Path $output 'foreground-Enter.log')
                 if(!($focused -match 'com\.programajster\.modernformsnext\.webview\.sample/')){throw 'Refusing Enter: foreground window is not the selected sample'}
                 [void](DeviceText @('shell','input','keyevent','66'));$popupEnterSent=$true
             }
             if($NativeBack -and !$backSent -and $current -match 'FLOOR WAIT NATIVE BACK'){
-                $window=DeviceText @('shell','dumpsys','window','windows')
+                $window=DeviceText @('shell','dumpsys','window')
                 $focused=@($window -split '[\r\n]+' | Where-Object {$_ -match 'mCurrentFocus='})
+                $focused | Set-Content (Join-Path $output 'foreground-Back.log')
                 if(!($focused -match 'com\.programajster\.modernformsnext\.webview\.sample/')){throw 'Refusing Back: foreground window is not the selected sample'}
                 [void](DeviceText @('shell','input','keyevent','4'));$backSent=$true
             }

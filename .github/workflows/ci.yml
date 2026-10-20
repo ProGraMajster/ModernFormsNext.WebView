@@ -74,6 +74,15 @@ jobs:
       - name: External consumer security diagnostics (Debug and Release)
         shell: pwsh
         run: ./scripts/test-security-consumer.ps1 -Snapshot '${{ matrix.snapshot }}' -FrameworkRoot '${{ github.workspace }}/framework'
+      - name: Preserve consumer diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-consumer-${{ matrix.snapshot }}
+          path: |
+            webview/artifacts/security-consumers/**/*.log
+            webview/artifacts/security-consumers/**/result.json
+            webview/artifacts/security-consumers/**/Consumer.cs
       - name: Build owned native security fixture
         shell: pwsh
         run: |

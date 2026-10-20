@@ -32,7 +32,7 @@ network policy parity or physical-device qualification.
 | Back/forward | Availability, false while loading | Native history | Native history; reset on overlapping programmatic navigation |
 | Reload/Stop | Reload false while loading; Stop revokes pending work | Implemented | Implemented |
 | JavaScript | Explicit opt-in; native JSON; cyclic/non-JSON projections differ | Official CoreWebView2 API | EvaluateJavascript |
-| Page to app | Untrusted string; document lifetime guard | Official transport, informational Source | Minimal annotated bridge; no reliable origin/Source |
+| Page to app | Untrusted string; document lifetime guard | Official transport, informational Source | Annotated Java bridge; initial blank popup SDK string port; no reliable origin/Source |
 | App to page | Untrusted string; submission completion | PostWebMessageAsString | JSON-escaped MessageEvent script |
 | JavaScript setting/UserAgent | Safe primitives; null agent restores default | Implemented | Implemented |
 | Permissions | No request/approval API | Default deny | Default deny, geolocation/file chooser denied |

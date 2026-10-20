@@ -59,8 +59,22 @@ navigation ID. `RequestedUri` is null. Never reconstruct identity using hit test
 the current top-level URL. The current request correlates lifetime only; it does not
 prove which document/frame originally queued the intent. Initial `about:blank` plus
 opener DOM writes can omit `OnPageFinished`; a guarded API23 visual-state callback
-confirms that initial frame. Real URL navigations retain normal SDK callbacks. This
-is render/lifetime readiness, not caller authentication or a network policy.
+confirms the initial render state. The target's Java interface is absent from this
+already-created blank document until a subsequent load. An API23 WebMessagePort
+therefore bootstraps the same untrusted string envelope/helper for this document;
+completion waits for that bootstrap. Both native finish/visual callback orders use
+the same path. Navigation, Stop and disposal close the native endpoint. The page owns
+the transferred endpoint; cleanup closes only the native-owned endpoint. This adds
+no public transport or lifecycle counter. Wildcard port transfer to an opaque blank
+page is explicitly **not** origin or caller authentication; an untrusted page can
+relay the port/helper. Real URL navigations retain normal SDK callbacks and Java
+bridge. Bootstrap failure reports Engine for the original request without a global
+or privileged fallback. This is render/lifetime readiness, not a network policy.
+Long popup/port JNI retention soak is not established by bounded handoff tests.
+The port uses the target's original canonical document cancellation token. A disabled
+JavaScript setting closes it; re-enabling does not restore an old endpoint. Navigate
+or reload to establish a fresh messaging document. Cancellation during its initial
+bootstrap fails that original request with Canceled; a later request is preserved.
 
 The SDK gesture indication is an intent filter, not an authorization boundary.
 Application script execution can confer transient activation on Windows. Timers in
@@ -87,10 +101,21 @@ safe 0 diagnostics; unsafe exact MFNWVSEC001 warning/risk/safer alternative; loc
 suppressed 0 diagnostics under warnings-as-errors; unsuppressed warnings-as-errors
 fails with that exact ID. All four cases run in Debug and Release for each snapshot.
 Shared tests exercise dynamic configuration, unsupported peers and reentrancy.
-Windows `--validate-popup` and Android `-Mode Popup` exercise real native actors,
-target DOM, lifetime, default/gesture filters, reuse and script close. Their exact
+Windows `scripts/test-windows-runtime.ps1 -Arguments @('--validate-popup')` and
+Android `-Mode Popup` exercise real native actors,
+target DOM/string delivery, actual HTTPS handoff, independent user-agent/scheme
+settings, lifetime, default/gesture filters, reuse and script close. An old helper
+actually attempts a send after JS disable/re-enable; the bounded no-delivery result
+is distinct from observing a rejected live native callback. Their exact
 results and platform limits belong in the PR qualification report, not inferred from
 compilation. API23 baseline and broader focus/Designer limits remain recorded in
 [platform qualification](native-platform-qualification.md).
+The Windows validator owns profile cleanup after the entire process tree exits;
+the original in-process deletion race is retained as failed development evidence.
 
 See the [complete options roadmap](security-options-roadmap.md) for deferred scopes.
+
+SDK references: [WebView2 target requirements](https://learn.microsoft.com/dotnet/api/microsoft.web.webview2.core.corewebview2newwindowrequestedeventargs.newwindow),
+[Android popup implementation](https://chromium.googlesource.com/chromium/src/+/HEAD/android_webview/docs/how-does-on-create-window-work.md),
+[Android WebView Java interface/load and visual-state APIs](https://developer.android.com/reference/android/webkit/WebView),
+[API23 string ports and ownership](https://developer.android.com/reference/android/webkit/WebMessagePort).

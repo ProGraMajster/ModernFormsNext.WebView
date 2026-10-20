@@ -104,12 +104,15 @@ public sealed class WebViewNewWindowTarget
 {
     private readonly Func<bool> current;
     private readonly Action reject;
-    internal WebViewNewWindowTarget(IWebViewNewWindowPeer peer, WebViewNavigationRequest request, Func<bool> current, Action reject)
-    { Peer = peer; Request = request; this.current = current; this.reject = reject; }
+    internal WebViewNewWindowTarget(IWebViewNewWindowPeer peer, WebViewNavigationRequest request, CancellationToken documentCancellationToken, Func<bool> current, Action reject)
+    { Peer = peer; Request = request; DocumentCancellationToken = documentCancellationToken; this.current = current; this.reject = reject; }
     /// <summary>Gets the existing native peer owned by the target's NativeViewHost lease.</summary>
     public IWebViewNewWindowPeer Peer { get; }
     /// <summary>Gets the canonical reserved target request.</summary>
     public WebViewNavigationRequest Request { get; }
+    /// <summary>Gets the existing target document's cancellation token for native asynchronous handoff/bootstrap work.</summary>
+    /// <remarks>Source validity must be checked before handoff; an accepted target afterwards owns its independent lifetime. This token is not caller authority.</remarks>
+    public CancellationToken DocumentCancellationToken { get; }
     /// <summary>Gets whether both controls, policies, request identities and cancellation tokens remain current.</summary>
     public bool IsCurrent => current();
     /// <summary>Releases an uncommitted native reservation and reports failure only if its request is still current.</summary>

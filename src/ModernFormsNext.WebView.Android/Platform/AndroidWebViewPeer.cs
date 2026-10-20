@@ -153,7 +153,8 @@ internal sealed partial class AndroidWebViewPeer(AndroidNativeViewSite site, IWe
     {
         retireBeforeNextNavigation |= loading;
         stopped = true; loading = false;
-        if (Current) view?.StopLoading();
+        try { ClosePopupPort(); }
+        finally { if (Current) view?.StopLoading(); }
     }
     private void ReplaceInterruptedBrowser()
     {
@@ -197,6 +198,7 @@ internal sealed partial class AndroidWebViewPeer(AndroidNativeViewSite site, IWe
     {
         if (!Current) return true;
         awaitingInitialPopup = false;
+        if (preparedPopupId != id || uri?.AbsoluteUri != "about:blank") { preparedPopupId = null; ClosePopupPort(); }
         // A URI leaving raw HTML is a new document, including a link/meta refresh
         // during its load. Do not normalize its destination as the raw HTML's private URL.
         bool redirect = !rawHtml && !stopped && loading && id != 0;
@@ -210,6 +212,7 @@ internal sealed partial class AndroidWebViewPeer(AndroidNativeViewSite site, IWe
         if (!Current || stopped) return;
         awaitingInitialPopup = false;
         var uri = ParseUri(url);
+        if (preparedPopupId != id || uri?.AbsoluteUri is not (null or "about:blank")) { preparedPopupId = null; ClosePopupPort(); }
         if (!loading || id == 0)
         {
             // POST and some engine navigations skip ShouldOverrideUrlLoading. Once the
@@ -244,8 +247,18 @@ internal sealed partial class AndroidWebViewPeer(AndroidNativeViewSite site, IWe
         Uri? uri = rawHtml ? null : ParseUri(url);
         if (!rawHtml && expectedUri is not null && uri != expectedUri) return;
         long originalId = id;
+        if (preparedPopupId == originalId && popupDocumentLifetime.IsCancellationRequested) { CancelInitialPopup(); return; }
+        if (preparedPopupId == originalId && uri?.AbsoluteUri is (null or "about:blank") && settings.IsJavaScriptEnabled)
+        {
+            // document.close can report PageFinished before/after the visual callback.
+            // Both paths must await the same SDK port bootstrap, never overwrite its
+            // helper with a Java interface absent from this initial blank document.
+            if (popupPortCallback is null) _ = InitializeBlankPopupMessagesAsync(view, browserGeneration, originalId);
+            if (popupPortCallback?.Ready.Task.IsCompletedSuccessfully != true) return;
+        }
+        preparedPopupId = null;
         loading = false; expectedUri = null; // Commit before observers may submit a new request.
-        if (settings.IsJavaScriptEnabled) view.EvaluateJavascript(CreateHelperScript(originalId), null);
+        if (settings.IsJavaScriptEnabled && popupPortCallback is null) view.EvaluateJavascript(CreateHelperScript(originalId), null);
         callbacks.HistoryChanged(originalId, view.CanGoBack(), view.CanGoForward());
         callbacks.NavigationCompleted(originalId, uri, null);
     }
@@ -263,6 +276,7 @@ internal sealed partial class AndroidWebViewPeer(AndroidNativeViewSite site, IWe
     private void Cleanup()
     {
         ++browserGeneration; // Revoke native callbacks before detaching/destroying the browser.
+        popupCancellation.Dispose(); popupCancellation = default; popupDocumentLifetime = default;
         preparedPopupId = null; openedPopup = awaitingInitialPopup = false;
         // Native owns outstanding JNI callback references until delivery; generation
         // revocation above makes them inert. Do not dispose a callback still in flight.
@@ -271,6 +285,7 @@ internal sealed partial class AndroidWebViewPeer(AndroidNativeViewSite site, IWe
         var previous = view; view = null;
         try
         {
+            ClosePopupPort(); // Remaining View/attachment teardown must still run if native close fails.
             foreach (var evaluation in evaluations.ToArray()) evaluation.Cancel();
             if (previous is not null)
             {
@@ -364,27 +379,29 @@ internal sealed partial class AndroidWebViewPeer(AndroidNativeViewSite site, IWe
     {
         [JavascriptInterface, Java.Interop.Export("postMessage")]
         public void PostMessage(string? message)
+            => owner.ReceiveBridgePacket(message, generation);
+    }
+    private void ReceiveBridgePacket(string? message, long generation, CancellationToken documentToken = default)
+    {
+        if (message is null) return;
+        long requestId;
+        string payload;
+        try
         {
-            if (message is null) return;
-            long requestId;
-            string payload;
-            try
-            {
-                using var packet = JsonDocument.Parse(message);
-                if (packet.RootElement.ValueKind != JsonValueKind.Array || packet.RootElement.GetArrayLength() != 2 ||
-                    packet.RootElement[0].ValueKind != JsonValueKind.Number ||
-                    !packet.RootElement[0].TryGetInt64(out requestId) || packet.RootElement[1].ValueKind != JsonValueKind.String) return;
-                payload = packet.RootElement[1].GetString()!;
-            }
-            catch (JsonException) { return; }
-            // JavascriptInterface runs on Chromium's bridge thread. Capture only the string;
-            // resolve current UI state after dispatch, and never claim sender origin on Android.
-            Dispatcher.UIThread.Post(() =>
-            {
-                if (owner.Current && generation == owner.browserGeneration && owner.settings.IsJavaScriptEnabled)
-                    owner.callbacks.WebMessageReceived(requestId, payload, null);
-            });
+            using var packet = JsonDocument.Parse(message);
+            if (packet.RootElement.ValueKind != JsonValueKind.Array || packet.RootElement.GetArrayLength() != 2 ||
+                packet.RootElement[0].ValueKind != JsonValueKind.Number ||
+                !packet.RootElement[0].TryGetInt64(out requestId) || packet.RootElement[1].ValueKind != JsonValueKind.String) return;
+            payload = packet.RootElement[1].GetString()!;
         }
+        catch (JsonException) { return; }
+        // Java interface callbacks arrive on Chromium's bridge thread; the initial
+        // popup port uses this same envelope path. Neither authenticates an origin.
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (Current && generation == browserGeneration && settings.IsJavaScriptEnabled && !documentToken.IsCancellationRequested)
+                callbacks.WebMessageReceived(requestId, payload, null);
+        });
     }
     private sealed class Evaluation : Java.Lang.Object, IValueCallback
     {

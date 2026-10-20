@@ -8,8 +8,8 @@ internal static class NewWindowRuntimeValidation
         window.popupAttempts=0;window.popupDone=false;window.captureOwnedPopup=false;
         function attemptPopup(){
           ++popupAttempts;
-          window.lastPopup=window.open('about:blank','_blank');
-          if(lastPopup){try{lastPopup.document.write('<p id="owned-popup">owned popup</p>');lastPopup.document.close();}catch(e){window.popupWriteError=String(e.name);}}
+          var destination=window.popupDestination||'about:blank';window.lastPopup=window.open(destination,'_blank');
+          if(lastPopup&&destination==='about:blank'){try{lastPopup.document.write('<p id="owned-popup">owned popup</p>');lastPopup.document.close();}catch(e){window.popupWriteError=String(e.name);}}
           if(window.captureOwnedPopup){window.ownedPopup=window.lastPopup;window.captureOwnedPopup=false;}
           window.popupDone=true;modernFormsWebView.postMessage('popup-actor-done');
         }
@@ -76,12 +76,17 @@ internal static class NewWindowRuntimeValidation
             EventHandler<WebViewMessageReceivedEventArgs> targetMessage = (_, e) =>
             { if (e.Message == "popup-target-message") { RuntimeValidation.Require(!e.IsOriginAuthenticated, "popup messages are untrusted"); message.TrySetResult(); } };
             target.WebMessageReceived += targetMessage;
+            int misrouted = 0;
+            EventHandler<WebViewMessageReceivedEventArgs> wrongTargetMessage = (_, e) =>
+            { if (e.Message == "popup-target-message") ++misrouted; };
+            source.WebMessageReceived += wrongTargetMessage;
             try
             {
-                await target.ExecuteScriptAsync("modernFormsWebView.postMessage('popup-target-message');null");
+                report("POPUP bridge probe " + await target.ExecuteScriptAsync("JSON.stringify({helper:typeof modernFormsWebView,bridge:typeof __modernFormsStringBridge,send:(function(){try{modernFormsWebView.postMessage('popup-target-message');return 'submitted';}catch(e){return String(e);}})()})"));
                 await message.Task.WaitAsync(TimeSpan.FromSeconds(10));
+                RuntimeValidation.Require(misrouted == 0, "target channel does not dispatch to opener");
             }
-            finally { target.WebMessageReceived -= targetMessage; }
+            finally { target.WebMessageReceived -= targetMessage; source.WebMessageReceived -= wrongTargetMessage; }
             report("PASS actual native non-gesture popup handoff to prehosted fresh control + opener DOM write; shared profile/opener risk remains");
             RuntimeValidation.Require(retained is not null, "native decision event ran");
             bool expired = false;
@@ -94,6 +99,21 @@ internal static class NewWindowRuntimeValidation
             RuntimeValidation.Require(reuseRejected && offered == 2 && !document.CancellationToken.IsCancellationRequested &&
                 await target.ExecuteScriptAsync("!!document.getElementById('owned-popup')") == "true", "used target is rejected without replacing its document");
             report("PASS native reused-target rejection preserves its existing document");
+
+            await target.ExecuteScriptAsync("window.savedPopupPost=modernFormsWebView.postMessage;null");
+            int stale = 0;
+            EventHandler<WebViewMessageReceivedEventArgs> staleMessage = (_, e) => { if (e.Message == "retired-popup-helper") ++stale; };
+            target.WebMessageReceived += staleMessage;
+            try
+            {
+                target.IsJavaScriptEnabled = false; target.IsJavaScriptEnabled = true;
+                string attempted = await target.ExecuteScriptAsync("(function(){window.retiredPopupAttempted=true;try{savedPopupPost('retired-popup-helper');}catch(e){}return window.retiredPopupAttempted;})()");
+                await Task.Delay(200); // Bounded no-delivery observation, not a claim that a callback arrived.
+                RuntimeValidation.Require(attempted == "true" && document.CancellationToken.IsCancellationRequested && stale == 0,
+                    "old helper actually attempted after JS disable/re-enable; canonical lifetime revoked and no delivery observed");
+            }
+            finally { target.WebMessageReceived -= staleMessage; }
+            report("PASS native old-popup helper attempt after JS disable/re-enable; token revoked, no delivery in bounded observation");
 
             var close = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             EventHandler closed = (_, _) => close.TrySetResult(); target.CloseRequested += closed;
@@ -113,7 +133,49 @@ internal static class NewWindowRuntimeValidation
             form.Controls.Remove(target);
         }
         await ReentrantStopAsync(form, report);
+        await UrlAsync(form, report);
         if (nativeGesture is not null) await GestureAsync(form, report, nativeGesture);
+    }
+
+    private static async Task UrlAsync(SampleForm form, Action<string> report)
+    {
+        var source = form.Browser;
+        await RuntimeValidation.NavigateAsync(source, () => source.NavigateToHtml(Page));
+        using var target = new WebView { Bounds = new(4, 4, 120, 70), IsJavaScriptEnabled = true, UserAgent = "ModernFormsNext-Popup-Validation" };
+        form.Controls.Add(target); await RuntimeValidation.ReadyAsync(target);
+        bool filter = target.BrowserCapabilities.HasFlag(WebViewCapabilities.NavigationSchemeFiltering);
+        if (filter) target.AllowedNavigationSchemes = WebViewNavigationSchemes.Https | WebViewNavigationSchemes.AboutBlank;
+        using var transport = new WebViewTransport(target);
+        var done = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        EventHandler<WebViewMessageReceivedEventArgs> message = (_, e) =>
+        { if (e.Message == "url-popup-ready") { RuntimeValidation.Require(!e.IsOriginAuthenticated, "URL popup strings remain untrusted"); done.TrySetResult(); } };
+        EventHandler<WebViewNewWindowRequestedEventArgs> requested = (_, e) => e.OpenIn(target);
+        source.NewWindowRequested += requested; target.WebMessageReceived += message; source.NewWindowPolicy = (WebViewNewWindowPolicy)2;
+        try
+        {
+            await source.ExecuteScriptAsync("window.popupDestination='https://example.com/';null");
+            await TimerAttemptAsync(source);
+            await WaitAsync(target, "document.title==='Example Domain'");
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            while (!transport.CurrentDocument.IsReady && watch.Elapsed < TimeSpan.FromSeconds(15)) await Task.Delay(20);
+            RuntimeValidation.Require(transport.CurrentDocument.IsReady && target.Source?.Host == "example.com", "real HTTPS popup canonical completion");
+            RuntimeValidation.Require(await target.ExecuteScriptAsync("navigator.userAgent") == "\"ModernFormsNext-Popup-Validation\"", "target retains its own user agent");
+            await target.ExecuteScriptAsync("modernFormsWebView.postMessage('url-popup-ready');null");
+            await done.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            if (filter)
+            {
+                var current = transport.CurrentDocument;
+                bool denied = false;
+                try { target.Navigate(new("http://denied.invalid/")); } catch (ArgumentException) { denied = true; }
+                RuntimeValidation.Require(denied && current == transport.CurrentDocument, "target retains its own scheme policy without consuming a navigation");
+            }
+            report("PASS real HTTPS popup + target user agent/string channel + independent scheme policy (filter supported=" + filter + ")");
+        }
+        finally
+        {
+            source.NewWindowRequested -= requested; target.WebMessageReceived -= message;
+            source.NewWindowPolicy = WebViewNewWindowPolicy.Deny; form.Controls.Remove(target);
+        }
     }
 
     private static async Task GestureAsync(SampleForm form, Action<string> report, Func<Task> activate)

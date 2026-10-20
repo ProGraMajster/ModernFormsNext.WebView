@@ -1,4 +1,6 @@
 using Browser = global::Android.Webkit.WebView;
+using global::Android.Webkit;
+using ModernFormsNext.WindowKit.Threading;
 
 namespace ModernFormsNext.WebView.Android;
 
@@ -8,6 +10,10 @@ internal sealed partial class AndroidWebViewPeer
     private long? preparedPopupId;
     private bool awaitingInitialPopup;
     private readonly HashSet<PopupVisualState> popupVisualStates = [];
+    private WebMessagePort? popupPort;
+    private PopupPortCallback? popupPortCallback;
+    private CancellationToken popupDocumentLifetime;
+    private CancellationTokenRegistration popupCancellation;
     private nint PopupContextHandle => site.Context.Handle;
     public bool SupportsNewWindows => Current && view is not null && chromeClient is not null;
     public void ApplyNewWindowPolicy(WebViewNewWindowPolicy policy)
@@ -46,6 +52,17 @@ internal sealed partial class AndroidWebViewPeer
         {
             peer.PrepareNewWindow(target.Request);
             if (!target.IsCurrent) { target.Reject(); return false; }
+            peer.popupDocumentLifetime = target.DocumentCancellationToken;
+            long preparedGeneration = peer.browserGeneration;
+            long preparedId = target.Request.Id;
+            var preparedToken = target.DocumentCancellationToken;
+            peer.popupCancellation = preparedToken.Register(() => Dispatcher.UIThread.Post(() =>
+            {
+                if (!peer.Current || peer.browserGeneration != preparedGeneration || peer.id != preparedId ||
+                    peer.popupDocumentLifetime != preparedToken) return;
+                peer.ClosePopupPort();
+                if (peer.preparedPopupId == peer.id && peer.loading && !peer.stopped) peer.CancelInitialPopup();
+            }));
             transport.WebView = peer.view;
             message.SendToTarget();
             var targetView = peer.view!;
@@ -56,10 +73,10 @@ internal sealed partial class AndroidWebViewPeer
             targetView.Post(() =>
             {
                 if (!peer.Current || peer.browserGeneration != targetGeneration || !ReferenceEquals(peer.view, targetView) ||
-                    peer.id != target.Request.Id || !peer.awaitingInitialPopup || peer.stopped) return;
-                var visual = new PopupVisualState(peer, targetView, targetGeneration, target.Request.Id);
+                    peer.id != preparedId || !peer.awaitingInitialPopup || peer.stopped) return;
+                var visual = new PopupVisualState(peer, targetView, targetGeneration, preparedId);
                 peer.popupVisualStates.Add(visual);
-                targetView.PostVisualStateCallback(target.Request.Id, visual);
+                targetView.PostVisualStateCallback(preparedId, visual);
             });
             return true;
         }
@@ -81,9 +98,93 @@ internal sealed partial class AndroidWebViewPeer
                 // Real URL navigations clear awaitingInitialPopup in the normal callbacks.
                 owner.Started("about:blank");
                 if (owner.Current && owner.browserGeneration == generation && ReferenceEquals(owner.view, browser) &&
-                    owner.id == requestId && !owner.stopped && owner.loading) owner.Finished("about:blank");
+                    owner.id == requestId && !owner.stopped && owner.loading)
+                {
+                    if (owner.settings.IsJavaScriptEnabled) _ = owner.InitializeBlankPopupMessagesAsync(browser, generation, requestId);
+                    else owner.Finished("about:blank");
+                }
             }
             finally { owner.popupVisualStates.Remove(this); Dispose(); }
+        }
+    }
+
+    private async Task InitializeBlankPopupMessagesAsync(Browser browser, long generation, long requestId)
+    {
+        PopupPortCallback? callback = null;
+        bool StillCurrent() => Current && browserGeneration == generation && ReferenceEquals(view, browser) &&
+            id == requestId && !stopped && loading && !popupDocumentLifetime.IsCancellationRequested && ReferenceEquals(popupPortCallback, callback);
+        try
+        {
+            // A popup's initial blank document predates attachment of the target Java
+            // interfaces. AddJavascriptInterface becomes visible only on a later load.
+            // Use the API23 SDK string port for this document, preserving the original
+            // envelope/client/request guards. This grants no origin/caller authority.
+            var ports = browser.CreateWebMessageChannel();
+            if (ports is not { Length: 2 }) throw new InvalidOperationException("The provider did not create a message channel.");
+            popupPort = ports[0];
+            using var transfer = ports[1];
+            callback = new PopupPortCallback(this, generation, requestId);
+            popupPortCallback = callback; popupPort.SetWebMessageCallback(callback);
+            string bootstrap = "(function(id){function bind(e){if(e.data!=='mfn-popup-port'||!e.ports||!e.ports[0])return;" +
+                "removeEventListener('message',bind);var port=e.ports[0];window.modernFormsWebView={postMessage:function(v){" +
+                "port.postMessage(JSON.stringify([id,String(v)]));}};port.postMessage('mfn-popup-ready');}" +
+                "addEventListener('message',bind);})(" + requestId.ToString(System.Globalization.CultureInfo.InvariantCulture) + ");null";
+            await ExecuteScriptAsync(bootstrap, CancellationToken.None);
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                if (!StillCurrent()) return;
+                // The wildcard deliberately carries untrusted string data to an opaque
+                // blank page. A relayed/stolen port is not an authenticated capability.
+                using var destination = global::Android.Net.Uri.Parse("*")!;
+                using var message = new WebMessage("mfn-popup-port", [transfer]);
+                browser.PostWebMessage(message, destination);
+            });
+            await callback.Ready.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        }
+        catch
+        {
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (!StillCurrent()) return; // Navigation/Stop/retirement owns its newer state.
+                ClosePopupPort(); stopped = true; loading = false; retireBeforeNextNavigation = true;
+                callbacks.NavigationFailed(requestId, ParseUri(browser.Url), WebViewErrorCategory.Engine);
+            });
+            return;
+        }
+        // Observer exceptions follow the ordinary dispatcher policy, outside the
+        // recoverable native-bootstrap catch above.
+        Dispatcher.UIThread.Post(() => { if (StillCurrent()) Finished("about:blank"); });
+    }
+
+    private void ClosePopupPort()
+    {
+        var previous = popupPort; var callback = popupPortCallback;
+        popupPort = null; popupPortCallback = null;
+        callback?.Ready.TrySetCanceled();
+        // The transferred peer belongs to JavaScript. Close only our native endpoint;
+        // queued JNI callbacks retain their wrappers until Chromium releases them.
+        try { previous?.Close(); } finally { previous?.Dispose(); }
+    }
+
+    private void CancelInitialPopup()
+    {
+        ClosePopupPort(); stopped = true; loading = false; retireBeforeNextNavigation = true;
+        callbacks.NavigationFailed(id, expectedUri, WebViewErrorCategory.Canceled);
+    }
+
+    private sealed class PopupPortCallback(AndroidWebViewPeer owner, long generation, long requestId) : WebMessagePort.WebMessageCallback
+    {
+        internal TaskCompletionSource Ready { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public override void OnMessage(WebMessagePort? port, WebMessage? message)
+        {
+            string? packet = message?.Data;
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (!owner.Current || owner.browserGeneration != generation || owner.id != requestId || owner.stopped || owner.popupDocumentLifetime.IsCancellationRequested ||
+                    !ReferenceEquals(owner.popupPortCallback, this)) return;
+                if (packet == "mfn-popup-ready") Ready.TrySetResult();
+                else owner.ReceiveBridgePacket(packet, generation, owner.popupDocumentLifetime);
+            });
         }
     }
 }

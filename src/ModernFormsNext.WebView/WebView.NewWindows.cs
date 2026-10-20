@@ -68,7 +68,7 @@ public partial class WebView
     private void ValidateNewWindowTarget(WebView target, IWebViewNewWindowPeer opener)
     {
         target.VerifyAccess();
-        if (ReferenceEquals(target, this) || !target.IsInitialized || target.requestId != 0 || target.requested is not null ||
+        if (ReferenceEquals(target, this) || !target.IsInitialized || target.requested is not null ||
             target.lease?.Peer is not IWebViewNewWindowPeer { SupportsNewWindows: true } peer || !peer.CanAcceptNewWindowFrom(opener))
             throw new InvalidOperationException("A separate, ready, unused and natively compatible hosted WebView target is required.");
     }
@@ -109,7 +109,7 @@ public partial class WebView
         var targetToken = target.documentLifetime.Token;
         bool TargetCurrent() => !targetToken.IsCancellationRequested && target.IsInitialized &&
             ReferenceEquals(target.lease, targetLease) && target.requestId == request.Id;
-        return new((IWebViewNewWindowPeer)targetLease!.Peer, request, () => SourceCurrent() && TargetCurrent(), () =>
+        return new((IWebViewNewWindowPeer)targetLease!.Peer, request, targetToken, () => SourceCurrent() && TargetCurrent(), () =>
         {
             if (TargetCurrent()) targetLease.FailNewWindow(request.Id, destination);
         });

@@ -65,8 +65,8 @@ public static class MfnQaKnownFolder {
             $arguments=@($(if($Keyboard){'--validate-keyboard'}else{'--validate'}))
             if($Focused){$arguments+='--validate-security'}
             if($Desktop){$arguments+='--validate-desktop'}
-            & $sample @arguments *> (Join-Path $output 'windows-native.log')
-            if($LASTEXITCODE){throw 'Native Windows validation failed'}
+            & (Join-Path $PSScriptRoot 'test-windows-runtime.ps1') -Configuration $Configuration -FrameworkRoot $FrameworkRoot -Arguments $arguments -EvidenceDirectory $output
+            if(!$?){throw 'Native Windows validation failed'}
         }finally{$env:MFN_QA_TLS_URI=$oldTls;$env:MFN_QA_DOWNLOAD_URI=$oldDownload}
         if(!(Select-String -LiteralPath (Join-Path $output 'windows-native.log') -Pattern 'RUNTIME PASS' -Quiet)){throw 'Windows terminal result absent'}
         $state=Invoke-RestMethod -Uri ($info.httpUri+'/state') -TimeoutSec 5

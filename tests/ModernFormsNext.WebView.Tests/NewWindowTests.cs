@@ -6,13 +6,14 @@ namespace ModernFormsNext.WebView.Tests;
 
 public sealed class NewWindowTests
 {
-    private sealed class PopupPeer(INativeViewSite site, IWebViewPeerClient client, object environment) : FakePeer(site, client), IWebViewNewWindowPeer
+    private sealed class PopupPeer(INativeViewSite site, IWebViewPeerClient client, object environment) : FakePeer(site, client), IWebViewNewWindowPeer, IWebViewNavigationFilterPeer
     {
         private object Environment { get; } = environment;
         internal bool Used, Supported = true;
         internal int PolicyChanges;
         internal WebViewNavigationRequest? Prepared;
         public bool SupportsNewWindows => Supported && Site.IsCurrent;
+        public bool SupportsNavigationSchemeFiltering => Site.IsCurrent;
         public void ApplyNewWindowPolicy(WebViewNewWindowPolicy policy)
         { ++PolicyChanges; Settings = Settings! with { NewWindowPolicy = policy }; }
         public bool CanAcceptNewWindowFrom(IWebViewNewWindowPeer source) => !Used && Site.IsCurrent &&
@@ -115,6 +116,7 @@ public sealed class NewWindowTests
         using var transport = new WebViewTransport(target.View); var old = transport.CurrentDocument;
         var handoff = Assert.IsType<WebViewNewWindowTarget>(f.Peer.Ask(uri: new("https://popup.test/")));
         Assert.True(old.CancellationToken.IsCancellationRequested); Assert.True(handoff.IsCurrent);
+        Assert.Equal(transport.CurrentDocument.CancellationToken, handoff.DocumentCancellationToken);
         Assert.Equal(transport.CurrentDocument.RequestId, handoff.Request.Id); Assert.True(target.View.IsLoading);
         target.Peer.PrepareNewWindow(handoff.Request);
         Assert.True(target.Peer.Client.NavigationStarting(handoff.Request.Id, handoff.Request.Uri, false));
@@ -207,5 +209,22 @@ public sealed class NewWindowTests
         int failures = 0; target.View.NavigationFailed += (_, e) => { Assert.Equal(WebViewErrorCategory.Engine, e.Category); ++failures; };
         Assert.Null(f.Peer.Ask()); Assert.Null(target.Peer.Prepared);
         Assert.Equal(1, failures); Assert.False(target.View.IsLoading);
+    }
+
+    [Fact]
+    public void FreshTargetMayConfigureItsOwnSchemePolicyWithoutBeingMistakenForANavigation()
+    {
+        using var f = new Fixture(); var target = f.Target();
+        target.View.AllowedNavigationSchemes = WebViewNavigationSchemes.Https;
+        using var transport = new WebViewTransport(target.View);
+        long before = transport.CurrentDocument.RequestId;
+        Assert.True(before > 0); // The existing scheme setter revokes through canonical Stop.
+        f.Source.NewWindowPolicy = WebViewNewWindowPolicy.UserInitiated;
+        f.Source.NewWindowRequested += (_, e) => e.OpenIn(target.View);
+        var handoff = Assert.IsType<WebViewNewWindowTarget>(f.Peer.Ask(true, uri: new("https://target.test/")));
+        Assert.True(handoff.Request.Id > before);
+        target.Peer.PrepareNewWindow(handoff.Request);
+        Assert.True(target.Peer.Client.NavigationStarting(handoff.Request.Id, handoff.Request.Uri, false));
+        Assert.False(target.Peer.Client.NavigationStarting(handoff.Request.Id, new("http://denied.test/"), true));
     }
 }
